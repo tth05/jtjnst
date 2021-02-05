@@ -10,7 +10,10 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.18.0'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.7.0'
 }
 
