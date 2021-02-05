@@ -35,6 +35,6 @@ public class TestMain {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         JavaCompilerHelper.run("Main", tmpDir, new ByteArrayInputStream(new byte[0]), out);
 
-        assertEquals("Hi" + System.lineSeparator() + "10" + System.lineSeparator(),out.toString());
+        assertEquals(JavaCompilerHelper.concatLines("Hi", "10"), out.toString());
     }
 }

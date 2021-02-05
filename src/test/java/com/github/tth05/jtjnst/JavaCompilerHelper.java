@@ -34,12 +34,13 @@ public class JavaCompilerHelper {
     }
 
     public static void run(String name, Path tmpDir, InputStream in, OutputStream out) {
+        boolean win = System.getProperty("os.name").toLowerCase().contains("win");
         String exePath = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator +
                          "java" +
-                         (System.getProperty("os.name").toLowerCase().contains("win") ? ".exe" : "");
+                         (win ? ".exe" : "");
 
         try {
-            Process process = new ProcessBuilder("cmd", "/c", "\"" + exePath + "\"" + " " + name)
+            Process process = new ProcessBuilder(win ? "cmd" : "bash", win ? "/c" : "-c", "\"" + exePath + "\"" + " " + name)
                     .directory(tmpDir.toFile())
                     .start();
             process.getOutputStream().write(in.readAllBytes());
@@ -48,6 +49,10 @@ public class JavaCompilerHelper {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static String concatLines(String...lines) {
+        return String.join(System.lineSeparator(), lines) + System.lineSeparator();
     }
 
     public static class JavaStringFileObject extends SimpleJavaFileObject {
