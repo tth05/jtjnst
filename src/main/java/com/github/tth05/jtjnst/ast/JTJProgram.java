@@ -21,6 +21,10 @@ public class JTJProgram extends JTJNode {
 
     private final List<JTJMethod> methodList = new ArrayList<>();
 
+    public JTJProgram() {
+        super(null);
+    }
+
     public void addMethod(JTJMethod method) {
         this.methodList.add(method);
     }
@@ -33,16 +37,16 @@ public class JTJProgram extends JTJNode {
     public void appendToStr(StringBuilder builder) {
         builder.append(PROGRAM_START);
 
-        JTJBlock inner = new JTJBlock();
+        JTJBlock inner = new JTJBlock(null);
 
         for (JTJMethod method : this.methodList) {
-            JTJStatement methodStatement = new JTJStatement();
+            JTJStatement methodStatement = new JTJStatement(null);
             methodStatement.addChild(method);
             inner.addChild(methodStatement);
         }
 
-        JTJStatement runMainMethodStmt = new JTJStatement();
-        runMainMethodStmt.addChild(new JTJString(MAIN_METHOD_RUN_STMT));
+        JTJStatement runMainMethodStmt = new JTJStatement(null);
+        runMainMethodStmt.addChild(new JTJString(null, MAIN_METHOD_RUN_STMT));
 
         inner.addChild(runMainMethodStmt);
 

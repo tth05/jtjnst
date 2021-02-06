@@ -8,6 +8,10 @@ public abstract class JTJChildrenNode extends JTJNode {
 
     private final List<JTJNode> children = new ArrayList<>();
 
+    public JTJChildrenNode(JTJChildrenNode parent) {
+        super(parent);
+    }
+
     public void addChild(JTJNode node) {
         this.children.add(node);
     }

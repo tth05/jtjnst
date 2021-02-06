@@ -1,10 +1,7 @@
 package com.github.tth05.jtjnst;
 
 import javax.tools.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,13 +10,16 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Locale;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class JavaCompilerHelper {
 
-    public static boolean compile(String code, Path tmpDir) {
+    public static boolean compile(String name, String code, Path tmpDir) {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, Locale.ENGLISH, StandardCharsets.UTF_8);
 
-        Path path = tmpDir.resolve("Main.java");
+        Path path = tmpDir.resolve(name + ".java");
         try {
             Files.deleteIfExists(path);
             Files.createFile(path);
@@ -27,8 +27,8 @@ public class JavaCompilerHelper {
             Iterable<? extends JavaFileObject> javaFileObjects = fileManager.getJavaFileObjects(path);
             compiler.getTask(null, fileManager, null, Arrays.asList("--release", "15", "-nowarn"), null, javaFileObjects).call();
             return true;
-        } catch (Throwable ignored) {
-            ignored.printStackTrace();
+        } catch (Throwable e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -49,6 +49,19 @@ public class JavaCompilerHelper {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void runAndExpect(String input, Path tmpDir, String...lines) {
+        String code = new JTJNSTranspiler(input).getTranspiledCode();
+        //TODO: remove imports
+        code = "import java.util.*;import java.util.stream.*;import java.util.function.*;" + code;
+
+        assertTrue(JavaCompilerHelper.compile("Main", code, tmpDir));
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        JavaCompilerHelper.run("Main", tmpDir, new ByteArrayInputStream(new byte[0]), out);
+
+        assertEquals(JavaCompilerHelper.concatLines(lines), out.toString());
     }
 
     public static String concatLines(String...lines) {

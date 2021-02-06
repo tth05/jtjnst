@@ -16,7 +16,11 @@ public class JTJMethod extends JTJChildrenNode {
             )
             """;
 
-    private final JTJBlock body = new JTJBlock();
+    private final JTJBlock body = new JTJBlock(this);
+
+    public JTJMethod() {
+        super(null);
+    }
 
     @Override
     public void addChild(JTJNode node) {

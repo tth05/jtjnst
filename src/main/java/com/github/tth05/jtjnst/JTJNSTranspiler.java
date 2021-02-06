@@ -5,16 +5,15 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
+import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.javaparser.utils.Pair;
-import com.github.tth05.jtjnst.ast.JTJMethod;
-import com.github.tth05.jtjnst.ast.JTJProgram;
-import com.github.tth05.jtjnst.ast.JTJStatement;
-import com.github.tth05.jtjnst.ast.JTJString;
+import com.github.tth05.jtjnst.ast.*;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -42,19 +41,89 @@ public class JTJNSTranspiler {
             unit.accept(new VoidVisitorAdapter<>() {
 
                 private JTJMethod currentMethod = null;
+                private JTJChildrenNode currentNode;
 
                 @Override
                 public void visit(MethodDeclaration n, Object arg) {
                     currentMethod = new JTJMethod();
+                    currentNode = currentMethod;
+
                     super.visit(n, arg);
+
                     program.addMethod(currentMethod);
+                    currentNode = null;
+                    currentMethod = null;
                 }
 
                 @Override
                 public void visit(ExpressionStmt n, Object arg) {
-                    JTJStatement statement = new JTJStatement();
-                    statement.addChild(new JTJString(n.getExpression().getTokenRange().get().toString()));
-                    currentMethod.addChild(statement);
+                    JTJStatement statement = new JTJStatement(currentNode);
+                    currentNode.addChild(statement);
+                    currentNode = statement;
+                    n.getExpression().accept(this, arg);
+                    currentNode = currentNode.getParent();
+                }
+
+                @Override
+                public void visit(MethodCallExpr n, Object arg) {
+                    n.getScope().ifPresent(l -> l.accept(this, arg));
+
+                    String prefix = n.getScope().isPresent() ? "." : "";
+                    currentNode.addChild(new JTJString(currentNode, prefix + n.getName().getIdentifier() + "("));
+                    n.getArguments().forEach(p -> p.accept(this, arg));
+                    currentNode.addChild(new JTJString(currentNode, ")"));
+
+                    //TODO: type arguments
+//                    n.getTypeArguments().ifPresent(l -> l.forEach(v -> v.accept(this, arg)));
+                }
+
+                @Override
+                public void visit(FieldAccessExpr n, Object arg) {
+                    currentNode.addChild(new JTJString(currentNode, n.getTokenRange().get().toString()));
+                }
+
+                @Override
+                public void visit(BinaryExpr n, Object arg) {
+                    n.getLeft().accept(this, arg);
+                    currentNode.addChild(new JTJString(currentNode, n.getOperator().asString()));
+                    n.getRight().accept(this, arg);
+                }
+
+                @Override
+                public void visit(IfStmt n, Object arg) {
+                    JTJStatement statement = new JTJStatement(currentNode);
+                    JTJIfStatement ifStatement = new JTJIfStatement(statement);
+                    currentNode = ifStatement.getCondition();
+                    n.getCondition().accept(this, arg);
+                    currentNode = ifStatement.getThenBlock();
+                    n.getThenStmt().accept(this, arg);
+                    currentNode = ifStatement.getElseBlock();
+                    n.getElseStmt().ifPresent(l -> l.accept(this, arg));
+
+                    currentNode = statement.getParent();
+
+                    statement.addChild(ifStatement);
+                    currentNode.addChild(statement);
+                }
+
+                @Override
+                public void visit(ThisExpr n, Object arg) {
+                    currentNode.addChild(new JTJString(currentNode, "this"));
+                }
+
+                @Override
+                public void visit(IntegerLiteralExpr n, Object arg) {
+                    currentNode.addChild(new JTJString(currentNode, n.asNumber() + ""));
+                }
+
+                @Override
+                public void visit(StringLiteralExpr n, Object arg) {
+                    currentNode.addChild(new JTJString(currentNode, "\"" + n.asString() + "\""));
+                }
+
+                @Override
+                public void visit(BooleanLiteralExpr n, Object arg) {
+                    currentNode.addChild(new JTJString(currentNode, n.getValue() + ""));
                 }
             }, null);
         });

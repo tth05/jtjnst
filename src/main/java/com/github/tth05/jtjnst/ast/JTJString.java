@@ -4,7 +4,8 @@ public class JTJString extends JTJNode {
 
     private final String value;
 
-    public JTJString(String value) {
+    public JTJString(JTJChildrenNode parent, String value) {
+        super(parent);
         this.value = value;
     }
 
