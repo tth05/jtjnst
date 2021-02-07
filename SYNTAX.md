@@ -53,6 +53,25 @@ After:
         /* block2 */).forEach(Runnable::run)
 ```
 
+## While statement
+
+See [blocks](#block)
+
+Before:
+```java
+while(condition) {
+    /* block */    
+}
+```
+
+After:
+```java
+while(condition ?
+        Arrays.<Runnable>asList(/* block */).stream().peek(Runnable::run).allMatch(Objects::nonNull) 
+        :
+        false) {} 
+```
+
 ## Bare-bones program
 
 Before:
