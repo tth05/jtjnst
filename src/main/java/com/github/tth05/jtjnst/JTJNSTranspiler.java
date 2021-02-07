@@ -8,6 +8,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
+import com.github.javaparser.ast.stmt.WhileStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
@@ -104,6 +105,26 @@ public class JTJNSTranspiler {
 
                     statement.addChild(ifStatement);
                     currentNode.addChild(statement);
+                }
+
+                @Override
+                public void visit(WhileStmt n, Object arg) {
+                    JTJStatement statement = new JTJStatement(currentNode);
+                    JTJWhileStatement whileStatement = new JTJWhileStatement(statement);
+                    currentNode = whileStatement.getCondition();
+                    n.getCondition().accept(this, arg);
+                    currentNode = whileStatement.getBody();
+                    n.getBody().accept(this, arg);
+
+                    currentNode = statement.getParent();
+
+                    statement.addChild(whileStatement);
+                    currentNode.addChild(statement);
+                }
+
+                @Override
+                public void visit(ObjectCreationExpr n, Object arg) {
+                    currentNode.addChild(new JTJString(currentNode, n.getTokenRange().get().toString()));
                 }
 
                 @Override

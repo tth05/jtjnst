@@ -30,4 +30,30 @@ public class IfStatementTest {
 
         JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi2");
     }
+
+    @Test
+    public void testIfElseElse() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        if(false)
+                            System.out.println("Hi");
+                        else if(true)
+                            System.out.println("Hi2");
+                        else
+                            System.out.println("Hi3");
+                            
+                        if(false)
+                            System.out.println("Hi4");
+                        else if(false)
+                            System.out.println("Hi5");
+                        else
+                            System.out.println("Hi6");
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi2", "Hi6");
+    }
 }
