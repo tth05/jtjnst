@@ -20,7 +20,7 @@ public class WhileStatementTest {
                         //is there a way to test this without variables?
                         while (i < 5) {
                             System.out.println("Hi");
-                            i++;
+                            ++i;
                         }
                     }
                 }

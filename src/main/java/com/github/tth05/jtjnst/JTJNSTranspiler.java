@@ -119,14 +119,13 @@ public class JTJNSTranspiler {
             if (!n.getTarget().isNameExpr())
                 throw new UnsupportedOperationException();
 
-            VariableStack.Variable variable = variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString());
-            currentNode.addChild(new JTJString(currentNode, variable.getScope().getScopeType().getMapName() +
-                                                            ".compute(" + variable.getNewName() +
-                                                            ", (k" + uniqueID() + ", v" + uniqueID() + ") ->"));
+            JTJVariableAssign assign = new JTJVariableAssign(currentNode, variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString()));
+            currentNode = assign;
 
             n.getValue().accept(this, arg);
 
-            currentNode.addChild(new JTJString(currentNode, ")"));
+            currentNode = assign.getParent();
+            currentNode.addChild(assign);
         }
 
         @Override
@@ -156,7 +155,7 @@ public class JTJNSTranspiler {
             }
 
             VariableStack.Variable variable = variableStack.findVariable(n.getExpression().asNameExpr().getNameAsString());
-            String method = n.isPrefix() ? "merge" : "put";
+            String method = n.isPrefix() ? "compute" : "put";
 
             currentNode.addChild(new JTJString(currentNode, variable.getScope().getScopeType().getMapName() +
                                                             "." + method + "(" + variable.getNewName() + "," +
@@ -223,20 +222,5 @@ public class JTJNSTranspiler {
         public void visit(BooleanLiteralExpr n, Object arg) {
             currentNode.addChild(new JTJString(currentNode, n.getValue() + ""));
         }
-    }
-
-    public static void main(String[] args) {
-        //language=Java
-        String input = """
-                public class Test {
-                    public static void main(String[] args) {
-                        int i = 5;
-                        System.out.println(i+5);
-                    }
-                }
-                """;
-
-        String code = new JTJNSTranspiler(input).getTranspiledCode();
-        System.out.println(code);
     }
 }
