@@ -1,14 +1,8 @@
 package com.github.tth05.jtjnst;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.Path;
-
-public class IfStatementTest {
-
-    @TempDir
-    static Path tmpDir;
+public class IfStatementTest extends TempDirTest {
 
     @Test
     public void testIf() {

@@ -1,14 +1,8 @@
 package com.github.tth05.jtjnst;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.Path;
-
-public class VariableTest {
-
-    @TempDir
-    static Path tmpDir;
+public class VariableTest extends TempDirTest {
 
     @Test
     public void testDeclaration() {
@@ -52,10 +46,13 @@ public class VariableTest {
                         i--;
                         i++;
                         System.out.println(i);
+                        System.out.println(++i);
+                        System.out.println(i++);
+                        System.out.println(i);
                     }
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "4");
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "4", "5", "5", "6");
     }
 }

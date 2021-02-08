@@ -149,10 +149,8 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(UnaryExpr n, Object arg) {
-            if (!n.getExpression().isNameExpr()) {
-                System.out.println("Unhandled unary expression found");
-                return;
-            }
+            if (!n.getExpression().isNameExpr())
+                throw new UnsupportedOperationException();
 
             VariableStack.Variable variable = variableStack.findVariable(n.getExpression().asNameExpr().getNameAsString());
             String method = n.isPrefix() ? "compute" : "put";
