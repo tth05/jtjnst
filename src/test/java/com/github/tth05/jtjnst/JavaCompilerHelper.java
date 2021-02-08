@@ -8,7 +8,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -23,9 +22,7 @@ public class JavaCompilerHelper {
 
         Path path = tmpDir.resolve(name + ".java");
         try {
-            Files.deleteIfExists(path);
-            Files.createFile(path);
-            Files.writeString(path, code, StandardOpenOption.CREATE);
+            Files.writeString(path, code);
             Iterable<? extends JavaFileObject> javaFileObjects = fileManager.getJavaFileObjects(path);
             compiler.getTask(null, fileManager, null, Arrays.asList("--release", "15", "-nowarn"), null, javaFileObjects).call();
             return true;

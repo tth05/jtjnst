@@ -8,7 +8,7 @@ import java.nio.file.Path;
 public class VariableTest {
 
     @TempDir
-    Path tmpDir;
+    static Path tmpDir;
 
     @Test
     public void testDeclaration() {

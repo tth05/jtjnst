@@ -8,7 +8,7 @@ import java.nio.file.Path;
 public class IfStatementTest {
 
     @TempDir
-    Path tmpDir;
+    static Path tmpDir;
 
     @Test
     public void testIf() {
