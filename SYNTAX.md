@@ -252,3 +252,70 @@ public class Test {
     }                                                                     
 }                                                                         
 ```
+
+## Classes
+
+Before:
+```java
+class TestClass {
+    private boolean val = false;
+    public void setVal(boolean b) {
+        this.val = b;
+    }
+    
+    public static void main(String[] args) {
+        new TestClass().setVal(false);
+    }
+}
+```
+
+After:
+```java
+public static void main(String[] __args) {
+    if (((Function<HashMap<Integer, Object>, Boolean>) ((global) -> Stream.<Runnable>of(() ->
+        Arrays.<Runnable>asList(
+            () -> /*TestClass::<init>*/
+                global.put(1, (BiConsumer<List<Object>, List<Object>>) (
+                        (args, retPtr) -> /*Arguments and return pointer*/
+                            ((Consumer<HashMap<Integer, Object>>) (local -> /*Add local scope*/
+                                Arrays.<Runnable>asList(
+                                    () -> local.put(0, new HashMap<>()),
+                                    () -> ((HashMap<Integer, Object>) local.get(0)).put(0, false), /*this.val = false*/
+                                    () -> ((HashMap<Integer, Object>) local.get(0)).put(1, global.get(2)), /*this.setVal = global.TestClass::setVal*/
+                                    () -> retPtr.set(0, local.get(0))
+                                ).forEach(Runnable::run)
+                            )).accept(new HashMap<>())
+                    )
+                ),
+            () -> /*TestClass::setVal*/
+                global.put(2, (BiConsumer<List<Object>, List<Object>>) (
+                        (args, retPtr) -> /*Arguments and return pointer*/
+                            /*args[0] = this*/
+                            /*args[1] = b*/
+                            ((Consumer<HashMap<Integer, Object>>) (local -> /*Add local scope*/
+                                Arrays.<Runnable>asList(
+                                    () -> ((HashMap<Integer, Object>) args.get(0)).put(0, args.get(1))
+                                ).forEach(Runnable::run)
+                            )).accept(new HashMap<>())
+                    )
+                ),
+            () -> /*Main method*/
+                global.put(0, (BiConsumer<List<Object>, List<Object>>) (
+                        (args, retPtr) -> /*Arguments and return pointer*/
+                            ((Consumer<HashMap<Integer, Object>>) (local -> /*Add local scope*/
+                                Arrays.<Runnable>asList(
+                                    () -> local.put(0, Arrays.asList(new Object[1])),
+                                    () -> ((BiConsumer<List<Object>, List<Object>>) global.get(1)).accept(null, (List<Object>) local.get(0)), /*new TestClass();*/
+                                    () -> local.put(0, ((List<Object>)local.get(0)).get(0)),
+                                    () -> ((BiConsumer<List<Object>, List<Object>>) ((HashMap<Integer, Object>) local.get(0)).get(1)).accept(Arrays.asList(local.get(0), false), null), /*virtual call*/
+                                    () -> ((BiConsumer<List<Object>, List<Object>>) global.get(2)).accept(Arrays.asList(local.get(0), false), null) /*non virtual call*/
+                                ).forEach(Runnable::run)
+                            )).accept(new HashMap<>())
+                    )
+                ),
+            /*Call program entry point / method 0 / main method*/
+            () -> ((BiConsumer<List<Object>, List<Object>>) global.get(0)).accept(Arrays.asList(__args), new ArrayList<>())
+        ).forEach(Runnable::run)
+    ).peek(Runnable::run).findFirst() == null)).apply(new HashMap<>())) {}
+}
+```
