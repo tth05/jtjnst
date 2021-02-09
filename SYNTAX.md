@@ -19,16 +19,16 @@ See [statements](#statement)
 Before:
 ```java
 {
-    /* statement1 */
-    /* statement2 */
+    System.out.println(1);
+    System.out.println(2);
 }
 ```
 
 After:
 ```java
 Arrays.<Runnable>asList(
-    () -> /* statement1 */,
-    () -> /* statement2 */
+    () -> System.out.println(1),
+    () -> System.out.println(2)
 ).forEach(Runnable::run)
 ```
 
@@ -39,18 +39,26 @@ See [blocks](#block)
 Before:
 ```java
 if (condition) {
-    /* block1 */
+    System.out.println(1);
+    System.out.println(2);
 } else {
-    /* block2 */    
+    System.out.println(3);
+    System.out.println(4);
 }
 ```
 
 After:
 ```java
 (condition ?
-        /* block1 */ 
+        Arrays.<Runnable>asList(
+            () -> System.out.println(1),
+            () -> System.out.println(2)
+        )
         :
-        /* block2 */).forEach(Runnable::run)
+        Arrays.<Runnable>asList(
+            () -> System.out.println(3),
+            () -> System.out.println(4)
+        )).forEach(Runnable::run)
 ```
 
 ## While statement
@@ -60,17 +68,98 @@ See [blocks](#block)
 Before:
 ```java
 while(condition) {
-    /* block */    
+    System.out.println(1);
 }
 ```
 
 After:
 ```java
 while(condition ?
-        Arrays.<Runnable>asList(/* block */).stream().peek(Runnable::run).allMatch(Objects::nonNull) 
+        Arrays.<Runnable>asList(() -> System.out.println(1)).stream().peek(Runnable::run).allMatch(Objects::nonNull) 
         :
         false) {} 
 ```
+
+### Break and continue
+Break and continue are implemented using exceptions. For `break`, the while statement is wrap and for `continue` the
+body is wrapped. Each exceptions has a custom message id which we use to differentiate between break, continue and other
+exceptions.
+
+Before:
+```
+int i = 0;
+while(i < 5) {
+    i++;
+    if(i < 3)
+        continue;
+    if(i >= 3)
+        break;
+    i++;
+}
+                        
+System.out.println(i);
+```
+
+After:
+```java
+Arrays.<Runnable>asList(
+        () -> local.put(1,0), //intialize i
+        () -> {
+            try {{ //try-catch for break
+                if(true ?
+                    Arrays.<Runnable>asList(() -> {
+                        while(((int)local.get(1))<5?Arrays.<Runnable>asList(() -> {
+                            try {{ //try-catch for continue
+                                if(true ? //if statement which runs the while body
+                                    Arrays.<Runnable>asList(
+                                        () -> local.put(1,((int)local.get(1))+1), //i++
+                                        () -> (((int)local.get(1))<3 //if(i < 3)
+                                                ?
+                                                Arrays.<Runnable>asList(
+                                                        () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(new RuntimeException("jtjThrow2")) //continue
+                                                )
+                                                :
+                                                Arrays.<Runnable>asList()).forEach(Runnable::run),
+                                        () -> (((int)local.get(1))>=3 //if(i >= 3)
+                                                ?
+                                                Arrays.<Runnable>asList(
+                                                    () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(new RuntimeException("jtjThrow3")) //break
+                                                )
+                                                :
+                                                Arrays.<Runnable>asList()).forEach(Runnable::run),
+                                        () -> local.put(1,((int)local.get(1))+1) //i++
+                                    ).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {}
+                            }} catch(Throwable jtjEx4) {{ //catch block for continue exceptions
+                                if(true ? //if statement which runs the body of the try-catch that catches continues
+                                    Arrays.<Runnable>asList(
+                                        () -> (jtjEx4.getMessage().equals("jtjThrow2") //check for continue exception id
+                                                ?
+                                                Arrays.<Runnable>asList()
+                                                :
+                                                Arrays.<Runnable>asList(
+                                                    () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(jtjEx4) //re-throw otherwise
+                                                )).forEach(Runnable::run)
+                                    ).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {} //end of if which checks for continue exceptions
+                        }}
+                    }).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {} //end of while statement
+                }).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {} //end of if which holds the while
+            }} catch(Throwable jtjEx5) {{ //catch block for break exceptions
+                if(true ? //if statement which runs the body of the try-catch that catches breaks
+                    Arrays.<Runnable>asList(
+                        () -> (jtjEx5.getMessage().equals("jtjThrow3") //check for break exception id
+                                ?
+                                Arrays.<Runnable>asList()
+                                :
+                                Arrays.<Runnable>asList(
+                                    () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(jtjEx5) //re-throw otherwise
+                                )).forEach(Runnable::run)
+                    ).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {} //end of if which checks for break exceptions
+            }}
+        },
+        () -> System.out.println(((int)local.get(1))) //print i at the end
+).forEach(Runnable::run)  
+```
+
 
 ## Bare-bones program
 
