@@ -81,12 +81,12 @@ while(condition ?
 ```
 
 ### Break and continue
-Break and continue are implemented using exceptions. For `break`, the while statement is wrap and for `continue` the
+Break and continue are implemented using exceptions. For `break`, the while statement is wrapped and for `continue` the
 body is wrapped. Each exceptions has a custom message id which we use to differentiate between break, continue and other
 exceptions.
 
 Before:
-```
+```java
 int i = 0;
 while(i < 5) {
     i++;
