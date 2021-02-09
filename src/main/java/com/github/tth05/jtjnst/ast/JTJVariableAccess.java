@@ -2,7 +2,7 @@ package com.github.tth05.jtjnst.ast;
 
 import com.github.tth05.jtjnst.VariableStack;
 
-public class JTJVariableAccess extends JTJChildrenNode {
+public class JTJVariableAccess extends JTJNode {
 
     public static final String VARIABLE_ACCESS_START = "((";
     public static final String VARIABLE_ACCESS_MIDDLE_1 = ")";

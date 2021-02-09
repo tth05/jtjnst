@@ -8,14 +8,13 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
-import com.github.javaparser.ast.stmt.ExpressionStmt;
-import com.github.javaparser.ast.stmt.IfStmt;
-import com.github.javaparser.ast.stmt.WhileStmt;
+import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
+import com.github.tth05.jtjnst.ast.util.ASTUtils;
 
 public class JTJNSTranspiler {
 
@@ -166,8 +165,7 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(IfStmt n, Object arg) {
-            JTJStatement statement = new JTJStatement(currentNode);
-            JTJIfStatement ifStatement = new JTJIfStatement(statement);
+            JTJIfStatement ifStatement = new JTJIfStatement(currentNode);
             currentNode = ifStatement.getCondition();
             n.getCondition().accept(this, arg);
             currentNode = ifStatement.getThenBlock();
@@ -175,25 +173,45 @@ public class JTJNSTranspiler {
             currentNode = ifStatement.getElseBlock();
             n.getElseStmt().ifPresent(l -> l.accept(this, arg));
 
-            currentNode = statement.getParent();
+            currentNode = ifStatement.getParent();
 
-            statement.addChild(ifStatement);
-            currentNode.addChild(statement);
+            currentNode.addChild(ifStatement);
         }
 
         @Override
         public void visit(WhileStmt n, Object arg) {
-            JTJStatement statement = new JTJStatement(currentNode);
-            JTJWhileStatement whileStatement = new JTJWhileStatement(statement);
+            JTJWhileStatement whileStatement = new JTJWhileStatement(currentNode, ASTUtils.getLabelFromParentNode(n));
+
             currentNode = whileStatement.getCondition();
             n.getCondition().accept(this, arg);
             currentNode = whileStatement.getBody();
             n.getBody().accept(this, arg);
 
-            currentNode = statement.getParent();
+            currentNode = whileStatement.getParent();
 
-            statement.addChild(whileStatement);
-            currentNode.addChild(statement);
+            currentNode.addChild(whileStatement);
+        }
+
+        @Override
+        public void visit(BreakStmt n, Object arg) {
+            String label = n.getLabel().map(SimpleName::asString).orElse(null);
+
+            JTJWhileStatement whileStatement = ASTUtils.findClosestWhile(currentNode, label);
+            int id = uniqueID();
+            whileStatement.addBreakStatement(id);
+
+            currentNode.addChild(new JTJThrow(currentNode, id));
+        }
+
+        @Override
+        public void visit(ContinueStmt n, Object arg) {
+            String label = n.getLabel().map(SimpleName::asString).orElse(null);
+
+            JTJWhileStatement whileStatement = ASTUtils.findClosestWhile(currentNode, label);
+            int id = uniqueID();
+            whileStatement.addContinueStatement(id);
+
+            currentNode.addChild(new JTJThrow(currentNode, id));
         }
 
         @Override

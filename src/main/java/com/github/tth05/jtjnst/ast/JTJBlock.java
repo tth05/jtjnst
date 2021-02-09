@@ -21,10 +21,15 @@ public class JTJBlock extends JTJChildrenNode {
 
     @Override
     public void addChild(JTJNode node) {
-        if (!(node instanceof JTJStatement))
-            throw new IllegalArgumentException();
+        if (node instanceof JTJStatement) {
+            super.addChild(node);
+            return;
+        }
 
-        super.addChild(node);
+
+        JTJStatement statement = new JTJStatement(this);
+        statement.addChild(node);
+        super.addChild(statement);
     }
 
     @Override

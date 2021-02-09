@@ -24,8 +24,8 @@ public class JavaCompilerHelper {
         try {
             Files.writeString(path, code);
             Iterable<? extends JavaFileObject> javaFileObjects = fileManager.getJavaFileObjects(path);
-            compiler.getTask(null, fileManager, null, Arrays.asList("--release", "15", "-nowarn"), null, javaFileObjects).call();
-            return true;
+            return compiler.getTask(null, fileManager, null,
+                    Arrays.asList("--add-exports", "java.base/jdk.internal.misc=ALL-UNNAMED", "-nowarn"), null, javaFileObjects).call();
         } catch (Throwable e) {
             e.printStackTrace();
             return false;
@@ -39,7 +39,8 @@ public class JavaCompilerHelper {
                          (win ? ".exe" : "");
 
         try {
-            Process process = new ProcessBuilder(win ? "cmd" : "bash", win ? "/c" : "-c", "\"" + exePath + "\"" + " " + name)
+            Process process = new ProcessBuilder(win ? "cmd" : "bash", win ? "/c" : "-c",
+                    "\"" + exePath + "\"" + " --add-exports java.base/jdk.internal.misc=ALL-UNNAMED " + name)
                     .directory(tmpDir.toFile())
                     .start();
             process.getOutputStream().write(in.readAllBytes());
@@ -50,7 +51,7 @@ public class JavaCompilerHelper {
         }
     }
 
-    public static void runAndExpect(String input, Path tmpDir, String...lines) {
+    public static void runAndExpect(String input, Path tmpDir, String... lines) {
         String code = new JTJNSTranspiler(input).getTranspiledCode();
         //TODO: remove imports
         code = "import java.util.*;import java.util.stream.*;import java.util.function.*;" + code;
@@ -63,7 +64,7 @@ public class JavaCompilerHelper {
         assertEquals(JavaCompilerHelper.concatLines(lines), out.toString());
     }
 
-    public static String concatLines(String...lines) {
+    public static String concatLines(String... lines) {
         return String.join(System.lineSeparator(), lines) + System.lineSeparator();
     }
 }

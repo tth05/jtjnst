@@ -22,6 +22,10 @@ public abstract class JTJChildrenNode extends JTJNode {
         }
     }
 
+    public void clearChildren() {
+        this.children.clear();
+    }
+
     public List<JTJNode> getChildren() {
         return Collections.unmodifiableList(children);
     }

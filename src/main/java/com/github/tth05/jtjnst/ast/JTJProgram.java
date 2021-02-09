@@ -40,16 +40,10 @@ public class JTJProgram extends JTJNode {
         JTJBlock inner = new JTJBlock(null);
 
         for (JTJMethod method : this.methodList) {
-            JTJStatement methodStatement = new JTJStatement(null);
-            methodStatement.addChild(method);
-            inner.addChild(methodStatement);
+            inner.addChild(method);
         }
 
-        JTJStatement runMainMethodStmt = new JTJStatement(null);
-        runMainMethodStmt.addChild(new JTJString(null, MAIN_METHOD_RUN_STMT));
-
-        inner.addChild(runMainMethodStmt);
-
+        inner.addChild(new JTJString(null, MAIN_METHOD_RUN_STMT));
         inner.appendToStr(builder);
 
         builder.append(PROGRAM_END);
