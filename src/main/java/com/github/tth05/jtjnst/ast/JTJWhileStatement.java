@@ -92,7 +92,7 @@ public class JTJWhileStatement extends JTJLabelNode {
         }).get();
 
         catchIfStatement.getElseBlock().addChild(new JTJString(catchIfStatement.getElseBlock(),
-                "jdk.internal.misc.Unsafe.getUnsafe().throwException(" +
+                JTJProgram.ACCESS_UNSAFE_INSTANCE + ".throwException(" +
                 JTJTryCatchStatement.CATCH_VARIABLE_PREFIX + exId + ")"));
 
         tryCatchStatement.getCatchBlock().addChild(catchIfStatement);

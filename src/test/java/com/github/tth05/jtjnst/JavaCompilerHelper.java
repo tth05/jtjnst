@@ -24,8 +24,16 @@ public class JavaCompilerHelper {
         try {
             Files.writeString(path, code);
             Iterable<? extends JavaFileObject> javaFileObjects = fileManager.getJavaFileObjects(path);
-            return compiler.getTask(null, fileManager, null,
-                    Arrays.asList("--add-exports", "java.base/jdk.internal.misc=ALL-UNNAMED", "-nowarn"), null, javaFileObjects).call();
+
+            ByteArrayOutputStream errStream = new ByteArrayOutputStream();
+            PrintWriter errWriter = new PrintWriter(errStream);
+            boolean result = compiler.getTask(errWriter, fileManager, null,
+                    Arrays.asList("--release", "15", "-nowarn"), null, javaFileObjects).call();
+
+            if (!result)
+                System.err.write(errStream.toByteArray());
+
+            return result;
         } catch (Throwable e) {
             e.printStackTrace();
             return false;
@@ -40,7 +48,7 @@ public class JavaCompilerHelper {
 
         try {
             Process process = new ProcessBuilder(win ? "cmd" : "bash", win ? "/c" : "-c",
-                    "\"" + exePath + "\"" + " --add-exports java.base/jdk.internal.misc=ALL-UNNAMED " + name)
+                    "\"" + exePath + "\"" + " " + name)
                     .directory(tmpDir.toFile())
                     .start();
             process.getOutputStream().write(in.readAllBytes());

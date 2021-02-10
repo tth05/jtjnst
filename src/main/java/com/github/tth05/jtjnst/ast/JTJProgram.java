@@ -6,6 +6,16 @@ import java.util.List;
 
 public class JTJProgram extends JTJNode {
 
+    public static final int UNSAFE_INDEX = 1;
+    public static final String ACCESS_UNSAFE_INSTANCE = "((sun.misc.Unsafe)global.get(%d))".formatted(UNSAFE_INDEX);
+
+    private static final String GET_UNSAFE_INSTANCE = """
+            Arrays.<Runnable>asList(
+                () -> {try {if (global.put(%d, sun.misc.Unsafe.class.getDeclaredField("theUnsafe")) != null) {}} catch (NoSuchFieldException e) {}},
+                () -> ((java.lang.reflect.Field) global.get(%d)).setAccessible(true),
+                () -> {try {if(global.put(%d, ((java.lang.reflect.Field)global.get(%d)).get(null)) != null){}} catch (IllegalAccessException e) {}}
+            ).forEach(Runnable::run)
+            """;
     private static final String MAIN_METHOD_RUN_STMT = "((BiConsumer<List<Object>, List<Object>>)global.get(0)).accept(Arrays.asList(__args), new ArrayList<>())";
     private static final String PROGRAM_START = """
             public class Main {
@@ -43,6 +53,7 @@ public class JTJProgram extends JTJNode {
             inner.addChild(method);
         }
 
+        inner.addChild(new JTJString(null, GET_UNSAFE_INSTANCE.formatted(UNSAFE_INDEX, UNSAFE_INDEX, UNSAFE_INDEX, UNSAFE_INDEX)));
         inner.addChild(new JTJString(null, MAIN_METHOD_RUN_STMT));
         inner.appendToStr(builder);
 

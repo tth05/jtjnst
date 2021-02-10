@@ -18,7 +18,8 @@ import com.github.tth05.jtjnst.ast.util.ASTUtils;
 
 public class JTJNSTranspiler {
 
-    private static int ID = 0;
+    //start at 10 to reserve some values for special stuff
+    private static int ID = 10;
 
     private final JTJProgram program = new JTJProgram();
     private final VariableStack variableStack = new VariableStack();

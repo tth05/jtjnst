@@ -4,7 +4,7 @@ public class JTJThrow extends JTJNode {
 
     public static final String THROW_ID_PREFIX = "jtjThrow";
 
-    public static final String THROWS = "jdk.internal.misc.Unsafe.getUnsafe().throwException(new RuntimeException(\"" + THROW_ID_PREFIX + "%d\"))";
+    public static final String THROWS = JTJProgram.ACCESS_UNSAFE_INSTANCE + ".throwException(new RuntimeException(\"" + THROW_ID_PREFIX + "%d\"))";
 
     private final int id;
 
