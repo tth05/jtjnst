@@ -1,20 +1,23 @@
 package com.github.tth05.jtjnst;
 
 import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.Parameter;
-import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.Modifier;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
 import com.github.tth05.jtjnst.ast.util.ASTUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class JTJNSTranspiler {
 
@@ -22,13 +25,13 @@ public class JTJNSTranspiler {
     private static int ID = 10;
 
     private final JTJProgram program = new JTJProgram();
-    private final VariableStack variableStack = new VariableStack();
 
+    private final VariableStack variableStack = new VariableStack();
     {
         variableStack.push(VariableStack.ScopeType.GLOBAL);
     }
 
-    public JTJNSTranspiler(String code) {
+    public JTJNSTranspiler(String... files) {
         ParserConfiguration configuration = new ParserConfiguration();
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
@@ -37,9 +40,65 @@ public class JTJNSTranspiler {
         configuration.setSymbolResolver(symbolSolver);
 
         JavaParser parser = new JavaParser(configuration);
-        ParseResult<CompilationUnit> result = parser.parse(code);
 
-        result.ifSuccessful(unit -> unit.accept(new CustomVisitor(), null));
+        List<CompilationUnit> parsedUnits = new ArrayList<>(files.length);
+        for (String file : files) {
+            Optional<CompilationUnit> result = parser.parse(file).getResult();
+            if (result.isEmpty())
+                throw new IllegalArgumentException("Invalid file supplied");
+
+            parsedUnits.add(result.get());
+        }
+
+        combinedTypeSolver.add(new PreParsedJavaParserTypeSolver(parsedUnits));
+        buildProgram(parsedUnits);
+    }
+
+    private void buildProgram(List<CompilationUnit> units) {
+        //collect all classes and methods to generate unique ids
+        for (CompilationUnit unit : units) {
+            for (TypeDeclaration<?> type : unit.getTypes()) {
+                JTJClass clazz = new JTJClass(ASTUtils.resolveFullName(type));
+                for (BodyDeclaration<?> member : type.getMembers()) {
+                    //TODO: constructor declaration
+                    if (member instanceof MethodDeclaration) {
+                        MethodDeclaration methodDeclaration = (MethodDeclaration) member;
+                        String signature = ASTUtils.generateSignature(methodDeclaration);
+
+                        //detect main method
+                        if (signature.endsWith("main([Ljava.lang.String;)") &&
+                            methodDeclaration.isStatic() &&
+                            methodDeclaration.getModifiers().contains(Modifier.staticModifier()) &&
+                            methodDeclaration.getModifiers().contains(Modifier.publicModifier()) &&
+                            methodDeclaration.getType().isVoidType()) {
+                            clazz.addMethod(new JTJMethod(signature, true));
+                        } else {
+                            clazz.addMethod(new JTJMethod(signature));
+                        }
+                    }
+                }
+
+                this.program.addClass(clazz);
+            }
+        }
+//        type.accept(new CustomVisitor(clazz), null);
+
+        for (CompilationUnit unit : units) {
+            for (TypeDeclaration<?> type : unit.getTypes()) {
+                JTJClass clazz = this.program.findClass(ASTUtils.resolveFullName(type));
+
+                for (BodyDeclaration<?> member : type.getMembers()) {
+                    //TODO: constructor declaration
+                    if (member instanceof MethodDeclaration) {
+                        JTJMethod jtjMethod = clazz.findMethod(ASTUtils.generateSignature((MethodDeclaration) member));
+
+                        member.accept(new CustomVisitor(jtjMethod), null);
+                    }
+                }
+            }
+        }
+
+        System.out.println("Done");
     }
 
     public String getTranspiledCode() {
@@ -53,11 +112,16 @@ public class JTJNSTranspiler {
     }
 
     private class CustomVisitor extends VoidVisitorAdapter<Object> {
+
+        private final JTJMethod currentMethod;
         private JTJChildrenNode currentNode;
+
+        private CustomVisitor(JTJMethod currentMethod) {
+            this.currentMethod = currentMethod;
+        }
 
         @Override
         public void visit(MethodDeclaration n, Object arg) {
-            JTJMethod currentMethod = new JTJMethod();
             currentNode = currentMethod;
 
             variableStack.push(VariableStack.ScopeType.PARAM);
@@ -70,8 +134,6 @@ public class JTJNSTranspiler {
 
             variableStack.pop();
             variableStack.pop();
-
-            program.addMethod(currentMethod);
             currentNode = null;
         }
 
@@ -86,15 +148,20 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(MethodCallExpr n, Object arg) {
-            n.getScope().ifPresent(l -> l.accept(this, arg));
+            ResolvedMethodDeclaration resolvedMethod = n.resolve();
 
-            String prefix = n.getScope().isPresent() ? "." : "";
-            currentNode.addChild(new JTJString(currentNode, prefix + n.getName().getIdentifier() + "("));
-            n.getArguments().forEach(p -> p.accept(this, arg));
-            currentNode.addChild(new JTJString(currentNode, ")"));
+            n.getScope().ifPresent(s -> {
+                //if the scope is a class name, we don't want to parse it
+                if (!(s instanceof NameExpr))
+                    s.accept(this, arg);
+            });
 
             //TODO: type arguments
-//                    n.getTypeArguments().ifPresent(l -> l.forEach(v -> v.accept(this, arg)));
+            JTJMethodCall jtjMethodCall = new JTJMethodCall(this.currentNode, program, resolvedMethod);
+            this.currentNode = jtjMethodCall;
+            n.getArguments().forEach(p -> p.accept(this, arg));
+            this.currentNode = this.currentNode.getParent();
+            this.currentNode.addChild(jtjMethodCall);
         }
 
         @Override
@@ -142,9 +209,15 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(BinaryExpr n, Object arg) {
+            JTJEmpty jtjEmpty = new JTJEmpty(currentNode);
+            currentNode = jtjEmpty;
+
             n.getLeft().accept(this, arg);
             currentNode.addChild(new JTJString(currentNode, n.getOperator().asString()));
             n.getRight().accept(this, arg);
+
+            currentNode = currentNode.getParent();
+            currentNode.addChild(jtjEmpty);
         }
 
         @Override

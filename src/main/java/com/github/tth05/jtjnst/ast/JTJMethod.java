@@ -1,11 +1,13 @@
 package com.github.tth05.jtjnst.ast;
 
+import com.github.tth05.jtjnst.JTJNSTranspiler;
+
 import java.util.List;
 
 public class JTJMethod extends JTJChildrenNode {
 
     public static final String METHOD_START = """
-            global.put(0, (BiConsumer<List<Object>, List<Object>>)(
+            global.put(%d, (BiConsumer<List<Object>, List<Object>>)(
                 (args, retPtr)->
                     ((Consumer<HashMap<Integer, Object>>)(local ->
             """;
@@ -18,8 +20,17 @@ public class JTJMethod extends JTJChildrenNode {
 
     private final JTJBlock body = new JTJBlock(this);
 
-    public JTJMethod() {
+    private final int id;
+    private final String signature;
+
+    public JTJMethod(String signature) {
+        this(signature, false);
+    }
+
+    public JTJMethod(String signature, boolean mainMethod) {
         super(null);
+        this.signature = signature;
+        this.id = mainMethod ? 0 : JTJNSTranspiler.uniqueID();
     }
 
     @Override
@@ -34,8 +45,16 @@ public class JTJMethod extends JTJChildrenNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(METHOD_START);
+        builder.append(METHOD_START.formatted(this.id));
         this.body.appendToStr(builder);
         builder.append(METHOD_END);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getSignature() {
+        return this.signature;
     }
 }

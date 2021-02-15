@@ -60,7 +60,11 @@ public class JavaCompilerHelper {
     }
 
     public static void runAndExpect(String input, Path tmpDir, String... lines) {
-        String code = new JTJNSTranspiler(input).getTranspiledCode();
+        runAndExpect(new String[]{input}, tmpDir, lines);
+    }
+
+    public static void runAndExpect(String[] inputs, Path tmpDir, String... lines) {
+        String code = new JTJNSTranspiler(inputs).getTranspiledCode();
         //TODO: remove imports
         code = "import java.util.*;import java.util.stream.*;import java.util.function.*;" + code;
 

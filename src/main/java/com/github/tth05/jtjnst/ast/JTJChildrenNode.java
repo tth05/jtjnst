@@ -22,6 +22,16 @@ public abstract class JTJChildrenNode extends JTJNode {
         }
     }
 
+    protected void appendChildrenToBuilderWithSeparator(StringBuilder builder, String separator) {
+        for (int i = 0; i < this.children.size(); i++) {
+            JTJNode child = this.children.get(i);
+            child.appendToStr(builder);
+
+            if (i != this.children.size() - 1)
+                builder.append(separator);
+        }
+    }
+
     public void clearChildren() {
         this.children.clear();
     }

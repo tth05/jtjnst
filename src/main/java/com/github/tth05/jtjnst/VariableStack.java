@@ -72,7 +72,8 @@ public class VariableStack {
         }
 
         public void addVariable(String name, String type) {
-            variableMap.put(name, new Variable(this, name, JTJNSTranspiler.uniqueID(), type));
+            variableMap.put(name, new Variable(this, name,
+                    scopeType == ScopeType.PARAM ? variableMap.size() : JTJNSTranspiler.uniqueID(), type));
         }
 
         public Variable getVariable(String oldName) {

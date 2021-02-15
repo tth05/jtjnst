@@ -1,8 +1,7 @@
 package com.github.tth05.jtjnst.ast;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JTJProgram extends JTJNode {
 
@@ -29,18 +28,28 @@ public class JTJProgram extends JTJNode {
                 }
             """;
 
-    private final List<JTJMethod> methodList = new ArrayList<>();
+    private final Map<String, JTJClass> classMap = new HashMap<>();
 
     public JTJProgram() {
         super(null);
     }
 
-    public void addMethod(JTJMethod method) {
-        this.methodList.add(method);
+    public void addClass(JTJClass clazz) {
+        this.classMap.put(clazz.getName(), clazz);
     }
 
-    public List<JTJMethod> getMethodList() {
-        return Collections.unmodifiableList(methodList);
+    public JTJClass findClass(String name) {
+        return this.classMap.get(name);
+    }
+
+    public JTJMethod findMethod(String name) {
+        for (JTJClass value : this.classMap.values()) {
+            JTJMethod method = value.findMethod(name);
+            if (method != null)
+                return method;
+        }
+
+        return null;
     }
 
     @Override
@@ -49,8 +58,10 @@ public class JTJProgram extends JTJNode {
 
         JTJBlock inner = new JTJBlock(null);
 
-        for (JTJMethod method : this.methodList) {
-            inner.addChild(method);
+        for (JTJClass clazz : classMap.values()) {
+            for (JTJMethod method : clazz.getMethodMap()) {
+                inner.addChild(method);
+            }
         }
 
         inner.addChild(new JTJString(null, GET_UNSAFE_INSTANCE.formatted(UNSAFE_INDEX, UNSAFE_INDEX, UNSAFE_INDEX, UNSAFE_INDEX)));
