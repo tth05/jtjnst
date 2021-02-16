@@ -305,7 +305,7 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(StringLiteralExpr n, Object arg) {
-            currentNode.addChild(new JTJString(currentNode, "\"" + n.asString() + "\""));
+            currentNode.addChild(new JTJString(currentNode, "\"" + n.asString().replace(";", "\\u003b") + "\""));
         }
 
         @Override
