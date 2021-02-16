@@ -202,12 +202,18 @@ public class JTJNSTranspiler {
         public void visit(NameExpr n, Object arg) {
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
 
-            currentNode.addChild(new JTJVariableAccess(currentNode, variable));
+            if(variable != null)
+                currentNode.addChild(new JTJVariableAccess(currentNode, variable));
+            else
+                currentNode.addChild(new JTJString(currentNode, n.calculateResolvedType().describe()));
         }
 
         @Override
         public void visit(FieldAccessExpr n, Object arg) {
-            currentNode.addChild(new JTJString(currentNode, n.getTokenRange().get().toString()));
+            n.getScope().accept(this, arg);
+            currentNode.addChild(new JTJString(currentNode, "."));
+            //TODO: fields of our custom types
+            currentNode.addChild(new JTJString(currentNode, n.getNameAsString()));
         }
 
         @Override
@@ -334,6 +340,19 @@ public class JTJNSTranspiler {
             whileStatement.addContinueStatement(id);
 
             currentNode.addChild(new JTJThrow(currentNode, id));
+        }
+
+        @Override
+        public void visit(ReturnStmt n, Object arg) {
+            //TODO: return needs to actually return
+            JTJStatement statement = new JTJStatement(currentNode);
+            currentNode = statement;
+
+            currentNode.addChild(new JTJString(currentNode, "retPtr[0] ="));
+            n.getExpression().ifPresent(e -> e.accept(this, arg));
+
+            currentNode = statement.getParent();
+            currentNode.addChild(statement);
         }
 
         @Override
