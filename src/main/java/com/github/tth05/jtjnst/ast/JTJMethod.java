@@ -7,13 +7,13 @@ import java.util.List;
 public class JTJMethod extends JTJChildrenNode {
 
     public static final String METHOD_START = """
-            global.put(%d, (BiConsumer<List<Object>, List<Object>>)(
+            global.put(%d, (BiFunction<List<Object>, Object[], Object[]>)(
                 (args, retPtr)->
-                    ((Consumer<HashMap<Integer, Object>>)(local ->
+                    (Object[]) Stream.of((Object)retPtr).peek((jtjLambda%d) -> ((Consumer<HashMap<Integer, Object>>) (local ->
             """;
 
     public static final String METHOD_END = """
-                    )).accept(new HashMap<>())
+                    )).accept(new HashMap<>())).findFirst().get()
                 )
             )
             """;
@@ -45,7 +45,7 @@ public class JTJMethod extends JTJChildrenNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(METHOD_START.formatted(this.id));
+        builder.append(METHOD_START.formatted(this.id, JTJNSTranspiler.uniqueID()));
         this.body.appendToStr(builder);
         builder.append(METHOD_END);
     }

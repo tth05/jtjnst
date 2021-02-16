@@ -6,6 +6,12 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.tth05.jtjnst.ast.util.ASTUtils;
 
 public class JTJMethodCall extends JTJChildrenNode {
+
+    private static final String METHOD_CALL_START_WITH_RETURN = "((%s)";
+    private static final String METHOD_CALL_START = "((BiFunction<List<Object>, Object[], Object[]>)global.get(%d)).apply(Arrays.asList(";
+    private static final String METHOD_CALL_END = "), new Object[0])";
+    private static final String METHOD_CALL_END_WITH_RETURN = "), new Object[1])[0])";
+
     private final JTJProgram program;
     private final ResolvedMethodDeclaration declaration;
 
@@ -18,6 +24,8 @@ public class JTJMethodCall extends JTJChildrenNode {
     @Override
     public void appendToStr(StringBuilder builder) {
         if (declaration instanceof JavaParserMethodDeclaration) {
+            String returnType = declaration.getReturnType().isVoid() ? null : declaration.getReturnType().describe();
+
             MethodDeclaration methodDeclaration = ((JavaParserMethodDeclaration) declaration).getWrappedNode();
             //TODO:
             if (!methodDeclaration.isStatic())
@@ -27,10 +35,21 @@ public class JTJMethodCall extends JTJChildrenNode {
             if (jtjMethod == null)
                 throw new IllegalStateException();
 
-            builder.append("((BiConsumer<List<Object>, List<Object>>) global.get(%d)).accept(Arrays.asList(".formatted(jtjMethod.getId()));
+            //add cast to start if method has return type
+            if (returnType != null)
+                builder.append(METHOD_CALL_START_WITH_RETURN.formatted(returnType));
+
+            builder.append(METHOD_CALL_START.formatted(jtjMethod.getId()));
             appendChildrenToBuilderWithSeparator(builder, ",");
-            builder.append("), null)");
+
+            //get return value from returned list
+            if (returnType != null)
+                builder.append(METHOD_CALL_END_WITH_RETURN);
+            else
+                builder.append(METHOD_CALL_END);
         } else {
+            if (declaration.isStatic())
+                builder.append(declaration.declaringType().getQualifiedName());
             builder.append(".");
             builder.append(declaration.getName());
             builder.append("(");

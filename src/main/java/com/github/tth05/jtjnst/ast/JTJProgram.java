@@ -15,7 +15,7 @@ public class JTJProgram extends JTJNode {
                 () -> {try {if(global.put(%d, ((java.lang.reflect.Field)global.get(%d)).get(null)) != null){}} catch (IllegalAccessException e) {}}
             ).forEach(Runnable::run)
             """;
-    private static final String MAIN_METHOD_RUN_STMT = "((BiConsumer<List<Object>, List<Object>>)global.get(0)).accept(Arrays.asList(__args), new ArrayList<>())";
+    private static final String MAIN_METHOD_RUN_STMT = "((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(Arrays.asList(__args), new Object[0])";
     private static final String PROGRAM_START = """
             public class Main {
                 public static void main(String[] __args) {
