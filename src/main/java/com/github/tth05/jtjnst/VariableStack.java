@@ -90,6 +90,7 @@ public class VariableStack {
         OBJECT("--"),
         PARAM("args"),
         LOCAL("local"),
+        FOR_LOOP("local"),
         OTHER("--");
 
         private final String mapName;

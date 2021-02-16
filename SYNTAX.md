@@ -160,6 +160,9 @@ Arrays.<Runnable>asList(
 ).forEach(Runnable::run)  
 ```
 
+## For statement
+
+See [While statement](#while-statement)
 
 ## Bare-bones program
 

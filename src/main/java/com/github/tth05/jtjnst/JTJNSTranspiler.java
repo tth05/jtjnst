@@ -3,7 +3,7 @@ package com.github.tth05.jtjnst;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Modifier;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
@@ -66,11 +66,7 @@ public class JTJNSTranspiler {
                         String signature = ASTUtils.generateSignature(methodDeclaration);
 
                         //detect main method
-                        if (signature.endsWith("main([Ljava.lang.String;)") &&
-                            methodDeclaration.isStatic() &&
-                            methodDeclaration.getModifiers().contains(Modifier.staticModifier()) &&
-                            methodDeclaration.getModifiers().contains(Modifier.publicModifier()) &&
-                            methodDeclaration.getType().isVoidType()) {
+                        if (ASTUtils.isMainMethod(signature, methodDeclaration)) {
                             clazz.addMethod(new JTJMethod(signature, true));
                         } else {
                             clazz.addMethod(new JTJMethod(signature));
@@ -97,8 +93,6 @@ public class JTJNSTranspiler {
                 }
             }
         }
-
-        System.out.println("Done");
     }
 
     public String getTranspiledCode() {
@@ -159,7 +153,13 @@ public class JTJNSTranspiler {
             //TODO: type arguments
             JTJMethodCall jtjMethodCall = new JTJMethodCall(this.currentNode, program, resolvedMethod);
             this.currentNode = jtjMethodCall;
-            n.getArguments().forEach(p -> p.accept(this, arg));
+            n.getArguments().forEach(p -> {
+                JTJEmpty jtjEmpty = new JTJEmpty(currentNode);
+                currentNode = jtjEmpty;
+                p.accept(this, arg);
+                currentNode = jtjEmpty.getParent();
+                currentNode.addChild(jtjEmpty);
+            });
             this.currentNode = this.currentNode.getParent();
             this.currentNode.addChild(jtjMethodCall);
         }
@@ -183,16 +183,19 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(AssignExpr n, Object arg) {
-            if (!n.getTarget().isNameExpr())
-                throw new UnsupportedOperationException();
+            if (n.getTarget().isNameExpr()) {
+                JTJVariableAssign assign = new JTJVariableAssign(currentNode, variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString()));
+                currentNode = assign;
 
-            JTJVariableAssign assign = new JTJVariableAssign(currentNode, variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString()));
-            currentNode = assign;
+                n.getValue().accept(this, arg);
 
-            n.getValue().accept(this, arg);
-
-            currentNode = assign.getParent();
-            currentNode.addChild(assign);
+                currentNode = assign.getParent();
+                currentNode.addChild(assign);
+            } else if (n.getTarget().isArrayAccessExpr()) {
+                n.getTarget().accept(this, arg);
+                currentNode.addChild(new JTJString(currentNode, "="));
+                n.getValue().accept(this, arg);
+            } else throw new UnsupportedOperationException();
         }
 
         @Override
@@ -222,19 +225,31 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(UnaryExpr n, Object arg) {
-            if (!n.getExpression().isNameExpr())
-                throw new UnsupportedOperationException();
+            String operator = n.getOperator().asString().length() > 1 ?
+                    n.getOperator().asString().substring(1) + "1" :
+                    n.getOperator().asString();
 
-            VariableStack.Variable variable = variableStack.findVariable(n.getExpression().asNameExpr().getNameAsString());
-            String method = n.isPrefix() ? "compute" : "put";
+            //variable access needs to use compute for prefix operators
+            if (n.getExpression().isNameExpr()) {
+                VariableStack.Variable variable = variableStack.findVariable(n.getExpression().asNameExpr().getNameAsString());
+                String method = n.isPrefix() ? "compute" : "put";
 
-            currentNode.addChild(new JTJString(currentNode, variable.getScope().getScopeType().getMapName() +
-                                                            "." + method + "(" + variable.getNewName() + "," +
-                                                            (n.isPrefix() ? "(k" + uniqueID() + ", v" + uniqueID() + ") ->" : "")));
+                currentNode.addChild(new JTJString(currentNode, variable.getScope().getScopeType().getMapName() +
+                                                                "." + method + "(" + variable.getNewName() + "," +
+                                                                (n.isPrefix() ? "(k" + uniqueID() + ", v" + uniqueID() + ") ->" : "")));
 
-            currentNode.addChild(new JTJVariableAccess(currentNode, variable));
-            currentNode.addChild(new JTJString(currentNode, n.getOperator().asString().substring(1) + "1"));
-            currentNode.addChild(new JTJString(currentNode, ")"));
+                currentNode.addChild(new JTJVariableAccess(currentNode, variable));
+                currentNode.addChild(new JTJString(currentNode, operator));
+                currentNode.addChild(new JTJString(currentNode, ")"));
+            } else {
+                if (n.isPrefix())
+                    currentNode.addChild(new JTJString(currentNode, operator));
+
+                n.getExpression().accept(this, arg);
+
+                if (n.isPostfix())
+                    currentNode.addChild(new JTJString(currentNode, operator));
+            }
         }
 
         @Override
@@ -250,6 +265,39 @@ public class JTJNSTranspiler {
             currentNode = ifStatement.getParent();
 
             currentNode.addChild(ifStatement);
+        }
+
+        @Override
+        public void visit(ForStmt n, Object arg) {
+            //convert for loop to while loop
+            variableStack.push(VariableStack.ScopeType.FOR_LOOP);
+
+            JTJWhileStatement whileStatement = new JTJWhileStatement(currentNode, ASTUtils.getLabelFromParentNode(n));
+
+            n.getInitialization().forEach(i -> {
+                JTJStatement statement = new JTJStatement(currentNode);
+                currentNode = statement;
+                i.accept(this, arg);
+                currentNode = statement.getParent();
+                currentNode.addChild(statement);
+            });
+
+            currentNode = whileStatement.getCondition();
+            n.getCompare().ifPresentOrElse(c -> c.accept(this, arg), () -> currentNode.addChild(new JTJString(currentNode, "true")));
+            currentNode = whileStatement.getBody();
+            n.getBody().accept(this, arg);
+            n.getUpdate().forEach(u -> {
+                JTJStatement statement = new JTJStatement(currentNode);
+                currentNode = statement;
+                u.accept(this, arg);
+                currentNode = statement.getParent();
+                currentNode.addChild(statement);
+            });
+
+            currentNode = whileStatement.getParent();
+            currentNode.addChild(whileStatement);
+
+            variableStack.pop();
         }
 
         @Override
@@ -296,6 +344,41 @@ public class JTJNSTranspiler {
         @Override
         public void visit(ThisExpr n, Object arg) {
             currentNode.addChild(new JTJString(currentNode, "this"));
+        }
+
+        @Override
+        public void visit(ArrayAccessExpr n, Object arg) {
+            //TODO: array of our custom types
+
+            n.getName().accept(this, arg);
+            currentNode.addChild(new JTJString(currentNode, "["));
+            n.getIndex().accept(this, arg);
+            currentNode.addChild(new JTJString(currentNode, "]"));
+        }
+
+        @Override
+        public void visit(ArrayCreationExpr n, Object arg) {
+            //TODO: array of our custom types
+            currentNode.addChild(new JTJString(currentNode, "new " + n.getElementType().asString()));
+            n.getLevels().forEach(p -> currentNode.addChild(new JTJString(currentNode, p.getTokenRange().get().toString())));
+
+            n.getInitializer().ifPresent(l -> l.accept(this, arg));
+        }
+
+        @Override
+        public void visit(ArrayInitializerExpr n, Object arg) {
+            currentNode.addChild(new JTJString(currentNode, "{"));
+
+            NodeList<Expression> values = n.getValues();
+            for (int i = 0; i < values.size(); i++) {
+                Expression p = values.get(i);
+                p.accept(this, arg);
+
+                if (i != values.size() - 1)
+                    currentNode.addChild(new JTJString(currentNode, ","));
+            }
+
+            currentNode.addChild(new JTJString(currentNode, "}"));
         }
 
         @Override

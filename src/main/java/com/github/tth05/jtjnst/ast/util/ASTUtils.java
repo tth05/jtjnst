@@ -1,5 +1,6 @@
 package com.github.tth05.jtjnst.ast.util;
 
+import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
@@ -11,6 +12,14 @@ import com.github.tth05.jtjnst.ast.JTJChildrenNode;
 import com.github.tth05.jtjnst.ast.JTJWhileStatement;
 
 public class ASTUtils {
+
+    public static boolean isMainMethod(String signature, MethodDeclaration declaration) {
+        return signature.endsWith("main([Ljava.lang.String;)") &&
+               declaration.isStatic() &&
+               declaration.getModifiers().contains(Modifier.staticModifier()) &&
+               declaration.getModifiers().contains(Modifier.publicModifier()) &&
+               declaration.getType().isVoidType();
+    }
 
     public static String getLabelFromParentNode(Node node) {
         if (node.getParentNode().isEmpty())
@@ -70,7 +79,7 @@ public class ASTUtils {
         if (type.isPrimitive())
             typeStr = type.asPrimitive().describe();
 
-        if(type.isVoid())
+        if (type.isVoid())
             return "";
 
         if (typeStr == null)

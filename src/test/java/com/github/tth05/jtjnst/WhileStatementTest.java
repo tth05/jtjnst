@@ -26,7 +26,7 @@ public class WhileStatementTest extends TempDirTest {
     }
 
     @Test
-    public void testContinue() {
+    public void testWhileContinue() {
         // language=Java
         String input = """
                 public class Test {
@@ -47,7 +47,7 @@ public class WhileStatementTest extends TempDirTest {
     }
 
     @Test
-    public void testContinueWithLabel() {
+    public void testWhileContinueWithLabel() {
         // language=Java
         String input = """
                 public class Test {
@@ -71,7 +71,7 @@ public class WhileStatementTest extends TempDirTest {
     }
 
     @Test
-    public void testBreak() {
+    public void testWhileBreak() {
         // language=Java
         String input = """
                 public class Test {
@@ -93,7 +93,7 @@ public class WhileStatementTest extends TempDirTest {
     }
 
     @Test
-    public void testBreakWithLabel() {
+    public void testWhileBreakWithLabel() {
         // language=Java
         String input = """
                 public class Test {
@@ -118,7 +118,7 @@ public class WhileStatementTest extends TempDirTest {
     }
 
     @Test
-    public void testBreakAndContinue() {
+    public void testWhileBreakAndContinue() {
         // language=Java
         String input = """
                 public class Test {
@@ -131,6 +131,135 @@ public class WhileStatementTest extends TempDirTest {
                             if(i >= 3)
                                 break;
                             i++;
+                        }
+                        
+                        System.out.println(i);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "3");
+    }
+
+    @Test
+    public void testBasicForStatement() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        for(int i = 0; i < 5; i++) {
+                            System.out.println("Hi");
+                        }
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi");
+    }
+
+    @Test
+    public void testForContinue() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int j = 0;
+                        for (int i = 0; i < 5; i++, j++) {
+                            System.out.println("Hi");
+                            i++;
+                            if (i < 5)
+                                continue;
+                            System.out.println("Hi2");
+                        }
+                        
+                        System.out.println(j);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi", "Hi2", "1");
+    }
+
+    @Test
+    public void testForContinueWithLabel() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int i = 0;
+                        outer:
+                        for(; i < 5; i++) {
+                            for(;;) {
+                                i++;
+                                continue outer;
+                            }
+                        }
+                        
+                        System.out.println(i);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "5");
+    }
+
+    @Test
+    public void testForBreak() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int i = 0;
+                        for (;i < 5; ++i) {
+                            i++;
+                            if (i < 5)
+                                break;
+                        }
+                        
+                        System.out.println(i);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "1");
+    }
+
+    @Test
+    public void testForBreakWithLabel() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int i = 0;
+                        outer:
+                        for(; i < 5; i++) {
+                            i++;
+                            for(;;) {
+                                i++;
+                                break outer;
+                            }
+                        }
+                        
+                        System.out.println(i);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "2");
+    }
+
+    @Test
+    public void testForBreakAndContinue() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int i = 0;
+                        for(;i < 5; i++) {
+                            i++;
+                            if(i < 3)
+                                continue;
+                            break;
                         }
                         
                         System.out.println(i);
