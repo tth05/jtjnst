@@ -401,6 +401,13 @@ public class JTJNSTranspiler {
         }
 
         @Override
+        public void visit(EnclosedExpr n, Object arg) {
+            currentNode.addChild(new JTJString(currentNode, "("));
+            n.getInner().accept(this, arg);
+            currentNode.addChild(new JTJString(currentNode, ")"));
+        }
+
+        @Override
         public void visit(IntegerLiteralExpr n, Object arg) {
             currentNode.addChild(new JTJString(currentNode, n.asNumber() + ""));
         }

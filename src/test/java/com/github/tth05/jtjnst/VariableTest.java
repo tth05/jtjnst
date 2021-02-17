@@ -55,4 +55,23 @@ public class VariableTest extends TempDirTest {
 
         JavaCompilerHelper.runAndExpect(input, tmpDir, "4", "5", "5", "6");
     }
+
+    @Test
+    public void testArrays() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int[] ar2 = new int[5];
+                        int[] ar = new int[] {5, 6, 7};
+                        System.out.println(ar[1]);
+                        System.out.println((ar[1] = 25) == 25);
+                        System.out.println(ar[1]);
+                        System.out.println(ar2[4]);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "6", "true", "25", "0");
+    }
 }

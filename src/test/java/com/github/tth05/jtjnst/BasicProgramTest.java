@@ -61,6 +61,6 @@ public class BasicProgramTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "");
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "[-5, -3, 1, 4, 5, 6, 23, 78, 3567367]");
     }
 }
