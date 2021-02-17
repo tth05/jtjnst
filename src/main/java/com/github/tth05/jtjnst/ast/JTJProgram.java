@@ -1,5 +1,8 @@
 package com.github.tth05.jtjnst.ast;
 
+import com.github.tth05.jtjnst.ast.structure.JTJBlock;
+import com.github.tth05.jtjnst.ast.structure.JTJNode;
+
 import java.util.HashMap;
 import java.util.Map;
 

@@ -1,7 +1,8 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.variable;
 
 import com.github.tth05.jtjnst.JTJNSTranspiler;
 import com.github.tth05.jtjnst.VariableStack;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 
 public class JTJVariableAssign extends JTJChildrenNode {
 

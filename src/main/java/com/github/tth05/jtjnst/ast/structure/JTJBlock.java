@@ -1,4 +1,4 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.structure;
 
 public class JTJBlock extends JTJChildrenNode {
 

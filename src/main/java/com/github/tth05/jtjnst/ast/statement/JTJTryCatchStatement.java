@@ -1,6 +1,9 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.statement;
 
 import com.github.javaparser.utils.Pair;
+import com.github.tth05.jtjnst.ast.structure.JTJBlock;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
 import java.util.ArrayList;
 import java.util.List;

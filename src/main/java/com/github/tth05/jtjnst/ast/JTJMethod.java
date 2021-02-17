@@ -1,6 +1,9 @@
 package com.github.tth05.jtjnst.ast;
 
 import com.github.tth05.jtjnst.JTJNSTranspiler;
+import com.github.tth05.jtjnst.ast.structure.JTJBlock;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
 import java.util.List;
 

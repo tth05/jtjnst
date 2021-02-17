@@ -1,4 +1,6 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.variable;
+
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 
 public class JTJVariableDeclaration extends JTJChildrenNode {
 

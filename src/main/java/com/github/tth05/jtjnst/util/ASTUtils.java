@@ -1,4 +1,4 @@
-package com.github.tth05.jtjnst.ast.util;
+package com.github.tth05.jtjnst.util;
 
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
@@ -8,8 +8,8 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.stmt.LabeledStmt;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
-import com.github.tth05.jtjnst.ast.JTJChildrenNode;
-import com.github.tth05.jtjnst.ast.JTJWhileStatement;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
 
 public class ASTUtils {
 

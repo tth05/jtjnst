@@ -1,4 +1,4 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.structure;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -3,7 +3,8 @@ package com.github.tth05.jtjnst.ast;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
-import com.github.tth05.jtjnst.ast.util.ASTUtils;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.util.ASTUtils;
 
 public class JTJMethodCall extends JTJChildrenNode {
 

@@ -1,4 +1,9 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.statement;
+
+import com.github.tth05.jtjnst.ast.structure.JTJBlock;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.structure.JTJEmpty;
+import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
 public class JTJIfStatement extends JTJChildrenNode {
 

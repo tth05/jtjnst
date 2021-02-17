@@ -13,7 +13,13 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
-import com.github.tth05.jtjnst.ast.util.ASTUtils;
+import com.github.tth05.jtjnst.ast.statement.JTJIfStatement;
+import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
+import com.github.tth05.jtjnst.ast.structure.*;
+import com.github.tth05.jtjnst.util.ASTUtils;
+import com.github.tth05.jtjnst.ast.variable.JTJVariableAccess;
+import com.github.tth05.jtjnst.ast.variable.JTJVariableAssign;
+import com.github.tth05.jtjnst.ast.variable.JTJVariableDeclaration;
 
 import java.util.ArrayList;
 import java.util.List;

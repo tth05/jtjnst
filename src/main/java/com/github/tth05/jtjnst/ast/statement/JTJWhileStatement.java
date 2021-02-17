@@ -1,6 +1,8 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.statement;
 
 import com.github.tth05.jtjnst.JTJNSTranspiler;
+import com.github.tth05.jtjnst.ast.*;
+import com.github.tth05.jtjnst.ast.structure.*;
 
 import java.util.ArrayList;
 import java.util.List;

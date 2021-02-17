@@ -1,6 +1,8 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.variable;
 
 import com.github.tth05.jtjnst.VariableStack;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
 public class JTJVariableAccess extends JTJNode {
 

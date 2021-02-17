@@ -1,4 +1,7 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.statement;
+
+import com.github.tth05.jtjnst.ast.structure.JTJBlock;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 
 public class JTJIfRunnableBlock extends JTJBlock {
 

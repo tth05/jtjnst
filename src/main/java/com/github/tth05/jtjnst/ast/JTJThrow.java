@@ -1,5 +1,8 @@
 package com.github.tth05.jtjnst.ast;
 
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.structure.JTJNode;
+
 public class JTJThrow extends JTJNode {
 
     public static final String THROW_ID_PREFIX = "jtjThrow";
