@@ -139,11 +139,9 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(ExpressionStmt n, Object arg) {
-            JTJStatement statement = new JTJStatement(currentNode);
-            currentNode.addChild(statement);
-            currentNode = statement;
+            pushNode(new JTJStatement(currentNode));
             n.getExpression().accept(this, arg);
-            currentNode = currentNode.getParent();
+            popNode();
         }
 
         @Override
@@ -157,32 +155,25 @@ public class JTJNSTranspiler {
             });
 
             //TODO: type arguments
-            JTJMethodCall jtjMethodCall = new JTJMethodCall(this.currentNode, program, resolvedMethod);
-            this.currentNode = jtjMethodCall;
+            pushNode(new JTJMethodCall(this.currentNode, program, resolvedMethod));
             n.getArguments().forEach(p -> {
-                JTJEmpty jtjEmpty = new JTJEmpty(currentNode);
-                currentNode = jtjEmpty;
+                pushNode(new JTJEmpty(currentNode));
                 p.accept(this, arg);
-                currentNode = jtjEmpty.getParent();
-                currentNode.addChild(jtjEmpty);
+                popNode();
             });
-            this.currentNode = this.currentNode.getParent();
-            this.currentNode.addChild(jtjMethodCall);
+            popNode();
         }
 
         @Override
         public void visit(VariableDeclarationExpr n, Object arg) {
-            JTJBlock jtjBlock = null;
             if (n.getVariables().size() > 1) {
-                jtjBlock = new JTJBlock(currentNode);
-                currentNode = jtjBlock;
+                pushNode(new JTJBlock(currentNode));
             }
 
             n.getVariables().forEach(p -> p.accept(this, arg));
 
             if (n.getVariables().size() > 1) {
-                currentNode = jtjBlock.getParent();
-                currentNode.addChild(jtjBlock);
+                popNode();
             }
         }
 
@@ -191,28 +182,22 @@ public class JTJNSTranspiler {
             variableStack.addVariable(n.getNameAsString(), n.getType().asString());
 
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
-            JTJVariableDeclaration variableDeclaration = new JTJVariableDeclaration(
+            pushNode(new JTJVariableDeclaration(
                     variable.getScope().getScopeType().getMapName(),
                     variable.getNewName(),
-                    currentNode);
+                    currentNode));
 
-            currentNode = variableDeclaration;
             //TODO: types
             n.getInitializer().ifPresent(l -> l.accept(this, arg));
-            currentNode = variableDeclaration.getParent();
-            currentNode.addChild(variableDeclaration);
+            popNode();
         }
 
         @Override
         public void visit(AssignExpr n, Object arg) {
             if (n.getTarget().isNameExpr()) {
-                JTJVariableAssign assign = new JTJVariableAssign(currentNode, variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString()));
-                currentNode = assign;
-
+                pushNode(new JTJVariableAssign(currentNode, variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString())));
                 n.getValue().accept(this, arg);
-
-                currentNode = assign.getParent();
-                currentNode.addChild(assign);
+                popNode();
             } else if (n.getTarget().isArrayAccessExpr()) {
                 n.getTarget().accept(this, arg);
                 currentNode.addChild(new JTJString(currentNode, "="));
@@ -240,15 +225,13 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(BinaryExpr n, Object arg) {
-            JTJEmpty jtjEmpty = new JTJEmpty(currentNode);
-            currentNode = jtjEmpty;
+            pushNode(new JTJEmpty(currentNode));
 
             n.getLeft().accept(this, arg);
             currentNode.addChild(new JTJString(currentNode, n.getOperator().asString()));
             n.getRight().accept(this, arg);
 
-            currentNode = currentNode.getParent();
-            currentNode.addChild(jtjEmpty);
+            popNode();
         }
 
         @Override
@@ -303,11 +286,9 @@ public class JTJNSTranspiler {
             JTJWhileStatement whileStatement = new JTJWhileStatement(currentNode, ASTUtils.getLabelFromParentNode(n));
 
             n.getInitialization().forEach(i -> {
-                JTJStatement statement = new JTJStatement(currentNode);
-                currentNode = statement;
+                pushNode(new JTJStatement(currentNode));
                 i.accept(this, arg);
-                currentNode = statement.getParent();
-                currentNode.addChild(statement);
+                popNode();
             });
 
             currentNode = whileStatement.getCondition();
@@ -315,11 +296,9 @@ public class JTJNSTranspiler {
             currentNode = whileStatement.getBody();
             n.getBody().accept(this, arg);
             n.getUpdate().forEach(u -> {
-                JTJStatement statement = new JTJStatement(currentNode);
-                currentNode = statement;
+                pushNode(new JTJStatement(currentNode));
                 u.accept(this, arg);
-                currentNode = statement.getParent();
-                currentNode.addChild(statement);
+                popNode();
             });
 
             currentNode = whileStatement.getParent();
@@ -367,14 +346,12 @@ public class JTJNSTranspiler {
         @Override
         public void visit(ReturnStmt n, Object arg) {
             //TODO: return needs to actually return
-            JTJStatement statement = new JTJStatement(currentNode);
-            currentNode = statement;
+            pushNode(new JTJStatement(currentNode));
 
             currentNode.addChild(new JTJString(currentNode, "retPtr[0] ="));
             n.getExpression().ifPresent(e -> e.accept(this, arg));
 
-            currentNode = statement.getParent();
-            currentNode.addChild(statement);
+            popNode();
         }
 
         @Override
@@ -442,6 +419,15 @@ public class JTJNSTranspiler {
         @Override
         public void visit(BooleanLiteralExpr n, Object arg) {
             currentNode.addChild(new JTJString(currentNode, n.getValue() + ""));
+        }
+
+        private void pushNode(JTJChildrenNode node) {
+            currentNode = node;
+        }
+
+        private void popNode() {
+            currentNode.getParent().addChild(currentNode);
+            currentNode = currentNode.getParent();
         }
     }
 }
