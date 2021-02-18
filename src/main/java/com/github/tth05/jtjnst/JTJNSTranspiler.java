@@ -171,6 +171,22 @@ public class JTJNSTranspiler {
         }
 
         @Override
+        public void visit(VariableDeclarationExpr n, Object arg) {
+            JTJBlock jtjBlock = null;
+            if (n.getVariables().size() > 1) {
+                jtjBlock = new JTJBlock(currentNode);
+                currentNode = jtjBlock;
+            }
+
+            n.getVariables().forEach(p -> p.accept(this, arg));
+
+            if (n.getVariables().size() > 1) {
+                currentNode = jtjBlock.getParent();
+                currentNode.addChild(jtjBlock);
+            }
+        }
+
+        @Override
         public void visit(VariableDeclarator n, Object arg) {
             variableStack.addVariable(n.getNameAsString(), n.getType().asString());
 
@@ -208,7 +224,7 @@ public class JTJNSTranspiler {
         public void visit(NameExpr n, Object arg) {
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
 
-            if(variable != null)
+            if (variable != null)
                 currentNode.addChild(new JTJVariableAccess(currentNode, variable));
             else
                 currentNode.addChild(new JTJString(currentNode, n.calculateResolvedType().describe()));

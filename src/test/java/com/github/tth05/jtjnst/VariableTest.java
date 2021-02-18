@@ -20,6 +20,22 @@ public class VariableTest extends TempDirTest {
     }
 
     @Test
+    public void testMultiDeclaration() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int i = 5, j = 6;
+                        System.out.println(i);
+                        System.out.println(6);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "5", "6");
+    }
+
+    @Test
     public void testAssignment() {
         // language=Java
         String input = """
