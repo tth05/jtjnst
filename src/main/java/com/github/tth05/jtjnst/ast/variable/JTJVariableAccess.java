@@ -20,9 +20,25 @@ public class JTJVariableAccess extends JTJNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(VARIABLE_ACCESS_START);
-        builder.append(variable.getType());
-        builder.append(VARIABLE_ACCESS_MIDDLE_1);
+        String variableType = variable.getType();
+        boolean needsCast = !variableType.equals("short") && !variableType.equals("byte");
+
+        if (needsCast) {
+            builder.append(VARIABLE_ACCESS_START);
+            builder.append(variableType);
+            builder.append(VARIABLE_ACCESS_MIDDLE_1);
+        } else {
+            //Not the best solution, converts short and byte back to their types because they will be put as integers
+            // into the maps.
+            // byte b = 5; -> local.put(10, 5); -> local.get(10) returns a integer
+            String capitalizedType = variableType.substring(0, 1).toUpperCase() + variableType.substring(1);
+            builder.append("java.lang.")
+                    .append(capitalizedType)
+                    .append(".parse")
+                    .append(capitalizedType)
+                    .append("(\"\" + ");
+        }
+
         builder.append(variable.getScope().getScopeType().getMapName());
         builder.append(VARIABLE_ACCESS_MIDDLE_2);
         builder.append(variable.getNewName());

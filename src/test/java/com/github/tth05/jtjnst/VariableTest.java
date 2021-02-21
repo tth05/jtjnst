@@ -20,6 +20,29 @@ public class VariableTest extends TempDirTest {
     }
 
     @Test
+    public void testTypes() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        int i = 5;
+                        long l = 5045674734636L;
+                        double d = 50.345645673473d;
+                        float f = 373.12345f;
+                        char c = 't';
+                        boolean b = true;
+                        byte bb = -5;
+                        short s = 4574;
+                        String str = "test";
+                        System.out.println("" + i + l + d + f + c + b + bb + s + str);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "5504567473463650.345645673473373.12344ttrue-54574test");
+    }
+
+    @Test
     public void testMultiDeclaration() {
         // language=Java
         String input = """

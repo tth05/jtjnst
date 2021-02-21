@@ -11,8 +11,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JavaCompilerHelper {
 
@@ -40,7 +39,7 @@ public class JavaCompilerHelper {
         }
     }
 
-    public static void run(String name, Path tmpDir, InputStream in, OutputStream out) {
+    public static InputStream run(String name, Path tmpDir, InputStream in, OutputStream out) {
         boolean win = System.getProperty("os.name").toLowerCase().contains("win");
         String exePath = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator +
                          "java" +
@@ -54,9 +53,12 @@ public class JavaCompilerHelper {
             process.getOutputStream().write(in.readAllBytes());
             process.waitFor();
             out.write(process.getInputStream().readAllBytes());
+            return process.getErrorStream();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 
     public static void runAndExpect(String input, Path tmpDir, String... lines) {
@@ -71,7 +73,9 @@ public class JavaCompilerHelper {
         assertTrue(JavaCompilerHelper.compile("Main", code, tmpDir));
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        JavaCompilerHelper.run("Main", tmpDir, new ByteArrayInputStream(new byte[0]), out);
+        InputStream errStream = JavaCompilerHelper.run("Main", tmpDir, new ByteArrayInputStream(new byte[0]), out);
+        assertNotNull(errStream);
+        assertDoesNotThrow(() -> assertEquals("", new String(errStream.readAllBytes(), StandardCharsets.UTF_8)));
 
         assertEquals(JavaCompilerHelper.concatLines(lines), out.toString());
     }

@@ -413,12 +413,32 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(StringLiteralExpr n, Object arg) {
-            currentNode.addChild(new JTJString(currentNode, "\"" + n.asString().replace(";", "\\u003b") + "\""));
+            currentNode.addChild(new JTJString(currentNode, "\"" + n.getValue().replace(";", "\\u003b") + "\""));
         }
 
         @Override
         public void visit(BooleanLiteralExpr n, Object arg) {
             currentNode.addChild(new JTJString(currentNode, n.getValue() + ""));
+        }
+
+        @Override
+        public void visit(CharLiteralExpr n, Object arg) {
+            currentNode.addChild(new JTJString(currentNode, "'" + n.getValue().replace(";", "\\u003b") + "'"));
+        }
+
+        @Override
+        public void visit(DoubleLiteralExpr n, Object arg) {
+            currentNode.addChild(new JTJString(currentNode, n.getValue()));
+        }
+
+        @Override
+        public void visit(LongLiteralExpr n, Object arg) {
+            currentNode.addChild(new JTJString(currentNode, n.getValue()));
+        }
+
+        @Override
+        public void visit(NullLiteralExpr n, Object arg) {
+            currentNode.addChild(new JTJString(currentNode, "null"));
         }
 
         private void pushNode(JTJChildrenNode node) {
