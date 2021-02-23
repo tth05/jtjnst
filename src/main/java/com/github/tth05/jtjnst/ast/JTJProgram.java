@@ -55,6 +55,16 @@ public class JTJProgram extends JTJNode {
         return null;
     }
 
+    public JTJMethod findConstructor(String name) {
+        for (JTJClass value : this.classMap.values()) {
+            JTJMethod method = value.findConstructor(name);
+            if (method != null)
+                return method;
+        }
+
+        return null;
+    }
+
     @Override
     public void appendToStr(StringBuilder builder) {
         builder.append(PROGRAM_START);
@@ -62,6 +72,11 @@ public class JTJProgram extends JTJNode {
         JTJBlock inner = new JTJBlock(null);
 
         for (JTJClass clazz : classMap.values()) {
+            //TODO: create init method which initializes instance fields and returns an instance
+            for (JTJMethod method : clazz.getConstructorMap()) {
+                inner.addChild(method);
+            }
+
             for (JTJMethod method : clazz.getMethodMap()) {
                 inner.addChild(method);
             }

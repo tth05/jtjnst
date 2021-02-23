@@ -10,16 +10,17 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
 import com.github.tth05.jtjnst.ast.statement.JTJIfStatement;
 import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
 import com.github.tth05.jtjnst.ast.structure.*;
-import com.github.tth05.jtjnst.util.ASTUtils;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableAccess;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableAssign;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableDeclaration;
+import com.github.tth05.jtjnst.util.ASTUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,7 @@ public class JTJNSTranspiler {
                     //TODO: constructor declaration
                     if (member instanceof MethodDeclaration) {
                         MethodDeclaration methodDeclaration = (MethodDeclaration) member;
-                        String signature = ASTUtils.generateSignature(methodDeclaration);
+                        String signature = ASTUtils.generateSignatureForMethod(methodDeclaration);
 
                         //detect main method
                         if (ASTUtils.isMainMethod(signature, methodDeclaration)) {
@@ -77,13 +78,14 @@ public class JTJNSTranspiler {
                         } else {
                             clazz.addMethod(new JTJMethod(signature));
                         }
+                    } else if (member instanceof ConstructorDeclaration) {
+                        clazz.addConstructor(new JTJMethod(ASTUtils.generateSignatureForMethod((ConstructorDeclaration) member)));
                     }
                 }
 
                 this.program.addClass(clazz);
             }
         }
-//        type.accept(new CustomVisitor(clazz), null);
 
         for (CompilationUnit unit : units) {
             for (TypeDeclaration<?> type : unit.getTypes()) {
@@ -92,9 +94,15 @@ public class JTJNSTranspiler {
                 for (BodyDeclaration<?> member : type.getMembers()) {
                     //TODO: constructor declaration
                     if (member instanceof MethodDeclaration) {
-                        JTJMethod jtjMethod = clazz.findMethod(ASTUtils.generateSignature((MethodDeclaration) member));
+                        JTJMethod jtjMethod = clazz.findMethod(ASTUtils.generateSignatureForMethod((MethodDeclaration) member));
 
                         member.accept(new CustomVisitor(jtjMethod), null);
+                    } else if (member instanceof ConstructorDeclaration) {
+                        JTJMethod jtjMethod = clazz.findConstructor(ASTUtils.generateSignatureForMethod((ConstructorDeclaration) member));
+
+                        member.accept(new CustomVisitor(jtjMethod), null);
+                    } else {
+                        throw new UnsupportedOperationException("Declarations of type " + member.getClass() + " not supported");
                     }
                 }
             }
@@ -121,16 +129,32 @@ public class JTJNSTranspiler {
         }
 
         @Override
+        public void visit(ConstructorDeclaration n, Object arg) {
+            handleMethod(n, n.getBody());
+        }
+
+        @Override
+        public void visit(ExplicitConstructorInvocationStmt n, Object arg) {
+            super.visit(n, arg);
+        }
+
+        @Override
         public void visit(MethodDeclaration n, Object arg) {
+            handleMethod(n, n.getBody().get());
+        }
+
+        private void handleMethod(CallableDeclaration<?> method, BlockStmt body) {
+            //TODO: throws & return
+
             currentNode = currentMethod;
 
             variableStack.push(VariableStack.ScopeType.PARAM);
-            for (Parameter parameter : n.getParameters()) {
+            for (Parameter parameter : method.getParameters()) {
                 variableStack.addVariable(parameter.getNameAsString(), parameter.getTypeAsString());
             }
             variableStack.push(VariableStack.ScopeType.LOCAL);
 
-            super.visit(n, arg);
+            body.accept(this, null);
 
             variableStack.pop();
             variableStack.pop();
@@ -148,14 +172,32 @@ public class JTJNSTranspiler {
         public void visit(MethodCallExpr n, Object arg) {
             ResolvedMethodDeclaration resolvedMethod = n.resolve();
 
-            n.getScope().ifPresent(s -> {
-                //if the scope is a class name, we don't want to parse it
-                if (!(s instanceof NameExpr))
-                    s.accept(this, arg);
-            });
+            boolean isStatic = resolvedMethod.isStatic();
+            boolean isJavaParserDeclaration = resolvedMethod instanceof JavaParserMethodDeclaration;
+            boolean switchScope = !isStatic && isJavaParserDeclaration;
+
+            //If we call a method on a custom instance, the scope will the first parameter of that method.
+            //  Otherwise it will come first as usual.
+            if (!switchScope) {
+                n.getScope().ifPresent(s -> {
+                    //don't parse the scope for static methods
+                    if (!isStatic)
+                        s.accept(this, arg);
+                });
+            }
 
             //TODO: type arguments
             pushNode(new JTJMethodCall(this.currentNode, program, resolvedMethod));
+
+            if (switchScope) {
+                //instance methods get the scope as the first param, which should be the instance
+                n.getScope().ifPresent(s -> {
+                    s.accept(this, arg);
+                });
+            } else if (resolvedMethod instanceof JavaParserMethodDeclaration) { //static methods get 0 as the first param
+                currentNode.addChild(new JTJString(null, "0"));
+            }
+
             n.getArguments().forEach(p -> {
                 pushNode(new JTJEmpty(currentNode));
                 p.accept(this, arg);
@@ -183,9 +225,9 @@ public class JTJNSTranspiler {
 
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
             pushNode(new JTJVariableDeclaration(
+                    currentNode,
                     variable.getScope().getScopeType().getMapName(),
-                    variable.getNewName(),
-                    currentNode));
+                    variable.getNewName()));
 
             //TODO: types
             n.getInitializer().ifPresent(l -> l.accept(this, arg));
@@ -210,7 +252,7 @@ public class JTJNSTranspiler {
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
 
             if (variable != null)
-                currentNode.addChild(new JTJVariableAccess(currentNode, variable));
+                currentNode.addChild(new JTJVariableAccess(currentNode, variable, program));
             else
                 currentNode.addChild(new JTJString(currentNode, n.calculateResolvedType().describe()));
         }
@@ -249,7 +291,7 @@ public class JTJNSTranspiler {
                                                                 "." + method + "(" + variable.getNewName() + "," +
                                                                 (n.isPrefix() ? "(k" + uniqueID() + ", v" + uniqueID() + ") ->" : "")));
 
-                currentNode.addChild(new JTJVariableAccess(currentNode, variable));
+                currentNode.addChild(new JTJVariableAccess(currentNode, variable, program));
                 currentNode.addChild(new JTJString(currentNode, operator));
                 currentNode.addChild(new JTJString(currentNode, ")"));
             } else {
@@ -369,7 +411,13 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(ObjectCreationExpr n, Object arg) {
-            currentNode.addChild(new JTJString(currentNode, n.getTokenRange().get().toString()));
+            pushNode(new JTJObjectCreation(currentNode, program, n.resolve()));
+            n.getArguments().forEach(p -> {
+                pushNode(new JTJEmpty(currentNode));
+                p.accept(this, arg);
+                popNode();
+            });
+            popNode();
         }
 
         @Override

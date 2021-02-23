@@ -6,10 +6,23 @@ public class JTJClass {
 
     private final String name;
 
+    private final Map<String, JTJMethod> constructorMap = new HashMap<>();
     private final Map<String, JTJMethod> methodMap = new HashMap<>();
 
     public JTJClass(String name) {
         this.name = name;
+    }
+
+    public void addConstructor(JTJMethod method) {
+        this.constructorMap.put(method.getSignature(), method);
+    }
+
+    public JTJMethod findConstructor(String signature) {
+        return this.constructorMap.get(signature);
+    }
+
+    public Collection<JTJMethod> getConstructorMap() {
+        return Collections.unmodifiableCollection(constructorMap.values());
     }
 
     public void addMethod(JTJMethod method) {

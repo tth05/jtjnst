@@ -23,6 +23,20 @@ public class StaticMethodTest extends TempDirTest {
     }
 
     @Test
+    public void testCallExternal() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        System.out.println(java.util.Arrays.toString(new int[0]));
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "[]");
+    }
+
+    @Test
     public void testCallDifferentClass() {
         // language=Java
         String input1 = """

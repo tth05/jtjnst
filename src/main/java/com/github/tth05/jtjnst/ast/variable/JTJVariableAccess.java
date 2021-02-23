@@ -1,6 +1,8 @@
 package com.github.tth05.jtjnst.ast.variable;
 
 import com.github.tth05.jtjnst.VariableStack;
+import com.github.tth05.jtjnst.ast.JTJObjectCreation;
+import com.github.tth05.jtjnst.ast.JTJProgram;
 import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
@@ -12,16 +14,21 @@ public class JTJVariableAccess extends JTJNode {
     public static final String VARIABLE_ACCESS_END = "))";
 
     private final VariableStack.Variable variable;
+    private final JTJProgram program;
 
-    public JTJVariableAccess(JTJChildrenNode parent, VariableStack.Variable variable) {
+    public JTJVariableAccess(JTJChildrenNode parent, VariableStack.Variable variable, JTJProgram program) {
         super(parent);
         this.variable = variable;
+        this.program = program;
     }
 
     @Override
     public void appendToStr(StringBuilder builder) {
         String variableType = variable.getType();
         boolean needsCast = !variableType.equals("short") && !variableType.equals("byte");
+
+        if (this.program.findClass(variableType) != null)
+            variableType = JTJObjectCreation.TYPE_CAST;
 
         if (needsCast) {
             builder.append(VARIABLE_ACCESS_START);
