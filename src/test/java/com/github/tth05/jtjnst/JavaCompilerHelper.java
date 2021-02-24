@@ -81,6 +81,6 @@ public class JavaCompilerHelper {
     }
 
     public static String concatLines(String... lines) {
-        return String.join(System.lineSeparator(), lines) + System.lineSeparator();
+        return String.join(System.lineSeparator(), lines) + (lines.length == 1 && lines[0].isBlank() ? "" : System.lineSeparator());
     }
 }

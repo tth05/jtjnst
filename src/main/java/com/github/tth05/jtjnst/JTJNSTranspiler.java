@@ -66,6 +66,12 @@ public class JTJNSTranspiler {
         for (CompilationUnit unit : units) {
             for (TypeDeclaration<?> type : unit.getTypes()) {
                 JTJClass clazz = new JTJClass(ASTUtils.resolveFullName(type));
+
+                //force add default constructor
+                if (type.getConstructors().isEmpty()) {
+                    type.addConstructor();
+                }
+
                 for (BodyDeclaration<?> member : type.getMembers()) {
                     //TODO: constructor declaration
                     if (member instanceof MethodDeclaration) {
@@ -101,6 +107,9 @@ public class JTJNSTranspiler {
                         JTJMethod jtjMethod = clazz.findConstructor(ASTUtils.generateSignatureForMethod((ConstructorDeclaration) member));
 
                         member.accept(new CustomVisitor(jtjMethod), null);
+
+                        //return instance from constructor
+                        jtjMethod.addChild(new JTJString(null, "retPtr[0] = args.get(0)"));
                     } else {
                         throw new UnsupportedOperationException("Declarations of type " + member.getClass() + " not supported");
                     }
@@ -192,10 +201,10 @@ public class JTJNSTranspiler {
             if (switchScope) {
                 //instance methods get the scope as the first param, which should be the instance
                 n.getScope().ifPresent(s -> s.accept(this, arg));
-            } else if (resolvedMethod instanceof JavaParserMethodDeclaration) {
+            } /*else if (resolvedMethod instanceof JavaParserMethodDeclaration) {
                 //static methods get 0 as the first param, this may be any random value
                 currentNode.addChild(new JTJString(null, "0"));
-            }
+            }*/ //TODO:
 
             n.getArguments().forEach(p -> {
                 pushNode(new JTJEmpty(currentNode));

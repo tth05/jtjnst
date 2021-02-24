@@ -1,6 +1,7 @@
 package com.github.tth05.jtjnst.ast;
 
 import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserConstructorDeclaration;
 import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
@@ -27,6 +28,16 @@ public class JTJObjectCreation extends JTJChildrenNode {
             JTJMethod jtjMethod = this.program.findConstructor(ASTUtils.generateSignatureForMethod(constructorDeclaration));
             if (jtjMethod == null)
                 throw new IllegalStateException("Member with signature " + ASTUtils.generateSignatureForMethod(constructorDeclaration) + " not found");
+
+            JTJClass jtjClass = this.program.findClass(ASTUtils.resolveFullName((TypeDeclaration<?>) constructorDeclaration.getParentNode().get()));
+            if (jtjClass == null)
+                throw new IllegalStateException();
+
+            //add init method call as first argument
+            this.addChildToFront(new JTJString(null,
+                    JTJMethodCall.METHOD_CALL_START_WITH_RETURN.formatted("Object") +
+                    JTJMethodCall.METHOD_CALL_START.formatted(jtjClass.getInitMethod().getId()) +
+                    JTJMethodCall.METHOD_CALL_END_WITH_RETURN));
 
             builder.append(JTJMethodCall.METHOD_CALL_START_WITH_RETURN.formatted(TYPE_CAST));
             builder.append(JTJMethodCall.METHOD_CALL_START.formatted(jtjMethod.getId()));
