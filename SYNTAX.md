@@ -26,7 +26,7 @@ Before:
 
 After:
 ```java
-Arrays.<Runnable>asList(
+java.util.List.<Runnable>of(
     () -> System.out.println(1),
     () -> System.out.println(2)
 ).forEach(Runnable::run)
@@ -50,12 +50,12 @@ if (condition) {
 After:
 ```java
 (condition ?
-        Arrays.<Runnable>asList(
+        java.util.List.<Runnable>of(
             () -> System.out.println(1),
             () -> System.out.println(2)
         )
         :
-        Arrays.<Runnable>asList(
+        java.util.List.<Runnable>of(
             () -> System.out.println(3),
             () -> System.out.println(4)
         )).forEach(Runnable::run)
@@ -75,7 +75,7 @@ while(condition) {
 After:
 ```java
 while(condition ?
-        Arrays.<Runnable>asList(() -> System.out.println(1)).stream().peek(Runnable::run).allMatch(Objects::nonNull) 
+        java.util.List.<Runnable>of(() -> System.out.println(1)).stream().peek(Runnable::run).allMatch(Objects::nonNull) 
         :
         false) {} 
 ```
@@ -102,41 +102,41 @@ System.out.println(i);
 
 After:
 ```java
-Arrays.<Runnable>asList(
+java.util.List.<Runnable>of(
         () -> local.put(1,0), //intialize i
         () -> {
             try {{ //try-catch for break
                 if(true ?
-                    Arrays.<Runnable>asList(() -> {
-                        while(((int)local.get(1))<5?Arrays.<Runnable>asList(() -> {
+                    java.util.List.<Runnable>of(() -> {
+                        while(((int)local.get(1))<5?java.util.List.<Runnable>of(() -> {
                             try {{ //try-catch for continue
                                 if(true ? //if statement which runs the while body
-                                    Arrays.<Runnable>asList(
+                                    java.util.List.<Runnable>of(
                                         () -> local.put(1,((int)local.get(1))+1), //i++
                                         () -> (((int)local.get(1))<3 //if(i < 3)
                                                 ?
-                                                Arrays.<Runnable>asList(
+                                                java.util.List.<Runnable>of(
                                                         () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(new RuntimeException("jtjThrow2")) //continue
                                                 )
                                                 :
-                                                Arrays.<Runnable>asList()).forEach(Runnable::run),
+                                                java.util.List.<Runnable>of()).forEach(Runnable::run),
                                         () -> (((int)local.get(1))>=3 //if(i >= 3)
                                                 ?
-                                                Arrays.<Runnable>asList(
+                                                java.util.List.<Runnable>of(
                                                     () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(new RuntimeException("jtjThrow3")) //break
                                                 )
                                                 :
-                                                Arrays.<Runnable>asList()).forEach(Runnable::run),
+                                                java.util.List.<Runnable>of()).forEach(Runnable::run),
                                         () -> local.put(1,((int)local.get(1))+1) //i++
                                     ).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {}
                             }} catch(Throwable jtjEx4) {{ //catch block for continue exceptions
                                 if(true ? //if statement which runs the body of the try-catch that catches continues
-                                    Arrays.<Runnable>asList(
+                                    java.util.List.<Runnable>of(
                                         () -> (jtjEx4.getMessage().equals("jtjThrow2") //check for continue exception id
                                                 ?
-                                                Arrays.<Runnable>asList()
+                                                java.util.List.<Runnable>of()
                                                 :
-                                                Arrays.<Runnable>asList(
+                                                java.util.List.<Runnable>of(
                                                     () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(jtjEx4) //re-throw otherwise
                                                 )).forEach(Runnable::run)
                                     ).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {} //end of if which checks for continue exceptions
@@ -145,12 +145,12 @@ Arrays.<Runnable>asList(
                 }).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {} //end of if which holds the while
             }} catch(Throwable jtjEx5) {{ //catch block for break exceptions
                 if(true ? //if statement which runs the body of the try-catch that catches breaks
-                    Arrays.<Runnable>asList(
+                    java.util.List.<Runnable>of(
                         () -> (jtjEx5.getMessage().equals("jtjThrow3") //check for break exception id
                                 ?
-                                Arrays.<Runnable>asList()
+                                java.util.List.<Runnable>of()
                                 :
-                                Arrays.<Runnable>asList(
+                                java.util.List.<Runnable>of(
                                     () -> jdk.internal.misc.Unsafe.getUnsafe().throwException(jtjEx5) //re-throw otherwise
                                 )).forEach(Runnable::run)
                     ).stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {} //end of if which checks for break exceptions
@@ -180,20 +180,20 @@ After:
 public class Test {                                                       
     public static void main(String[] __args) {
         if(((Function<HashMap<Integer, Object>, Boolean>)((global)->Stream.<Runnable>of(() ->
-            Arrays.<Runnable>asList(
+            java.util.List.<Runnable>of(
                 ()-> /*Static init*/,
                 /*Add all methods*/
                 ()-> /*Main method*/
                     global.put(0, (BiFunction<List<Object>, Object[], Object[]>)(
                         (args, retPtr)-> /*Arguments and return pointer*/
                             (Object[]) Stream.of((Object)retPtr).peek((lambdaParam) -> ((Consumer<HashMap<Integer, Object>>) (local -> /*Add local scope*/
-                                Arrays.asList(
+                                java.util.List.of(
                                     () -> System.out.println("Hi")
                                 ).forEach(Runnable::run))).accept(new HashMap<>())).findFirst().get()
                         )
                     ),
                 /*Call program entry point / method 0 / main method*/
-                ()-> ((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(Arrays.asList(__args), new Object[0])
+                ()-> ((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(java.util.List.of(__args), new Object[0])
             ).forEach(Runnable::run)
         ).peek(Runnable::run).findFirst() == null)).apply(new HashMap<>())) {}                                 
     }                                                                     
@@ -220,16 +220,16 @@ After:
 public class Test {
     public static void main(String[] __args) {
         if(((Function<HashMap<Integer, Object>, Boolean>)((global)->Stream.<Runnable>of(() ->
-            Arrays.<Runnable>asList(
+            java.util.List.<Runnable>of(
                 /*Add all methods*/
                 ()-> /*Main method*/
                     global.put(0, (BiFunction<List<Object>, Object[], Object[]>)(
                         (args, retPtr) -> /*Arguments and return pointer*/
                             (Object[]) Stream.of((Object)retPtr).peek((lambdaParam) -> ((Consumer<HashMap<Integer, Object>>) (local ->
-                                Arrays.<Runnable>asList(
+                                java.util.List.<Runnable>of(
                                     () -> System.out.println("Main start"),
                                     () -> local.put(0, (Integer)5) /*Create object in local space*/,
-                                    () -> System.out.println("Return value is: " + ((BiFunction<List<Object>, Object[], Object[]>)global.get(1)).apply(Arrays.asList(local.get(0)), new Object[1])[0])
+                                    () -> System.out.println("Return value is: " + ((BiFunction<List<Object>, Object[], Object[]>)global.get(1)).apply(java.util.List.of(local.get(0)), new Object[1])[0])
                                 ).forEach(Runnable::run)
                             )).accept(new HashMap<>())).findFirst().get()
                     )), 
@@ -237,12 +237,12 @@ public class Test {
                     global.put(1, (BiFunction<List<Object>, Object[], Object[]>)(
                         (args, retPtr) -> /*Arguments and return pointer*/
                             (Object[]) Stream.of((Object)retPtr).peek((lambdaParam) -> ((Consumer<HashMap<Integer, Object>>) (local -> //this stream contains the return return pointer
-                                Arrays.<Runnable>asList(
+                                java.util.List.<Runnable>of(
                                     () -> ((Object[]) retPtr)[0] = ((Integer) args.get(0)) + 0.5 //return statement
                                 ).forEach(Runnable::run))).accept(new HashMap<>())).findFirst().get()
                     )),
                 /*Call program entry point / method 0 / main method*/
-                () -> ((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(Arrays.asList(__args), new Object[0])
+                () -> ((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(java.util.List.of(__args), new Object[0])
             ).forEach(Runnable::run)
         ).peek(Runnable::run).findFirst() == null)).apply(new HashMap<>())) {}
     }                                                                    
@@ -270,12 +270,12 @@ After:
 class Test {
     public static void main(String[] __args) {
         if (((Function<HashMap<Integer, Object>, Boolean>) ((global) -> Stream.<Runnable>of(() ->
-            Arrays.<Runnable>asList(
+            java.util.List.<Runnable>of(
                 () -> /*TestClass::<init>*/
                     global.put(1, (BiFunction<List<Object>, Object[], Object[]>) (
                             (args, retPtr) -> /*Arguments and return pointer*/
                                 (Object[]) Stream.of((Object)retPtr).peek((lambdaParam) -> ((Consumer<HashMap<Integer, Object>>) (local -> /*Add local scope*/
-                                    Arrays.<Runnable>asList(
+                                    java.util.List.<Runnable>of(
                                         () -> local.put(0, new HashMap<>()),
                                         () -> ((HashMap<Integer, Object>) local.get(0)).put(0, false), /*this.val = false*/
                                         () -> ((HashMap<Integer, Object>) local.get(0)).put(1, global.get(2)), /*this.setVal = global.TestClass::setVal*/
@@ -289,7 +289,7 @@ class Test {
                                 /*args[0] = this*/
                                 /*args[1] = b*/
                                 (Object[]) Stream.of((Object)retPtr).peek((agg) -> ((Consumer<HashMap<Integer, Object>>) (local -> /*Add local scope*/
-                                    Arrays.<Runnable>asList(
+                                    java.util.List.<Runnable>of(
                                         () -> ((HashMap<Integer, Object>) args.get(0)).put(0, args.get(1))
                                     ).forEach(Runnable::run))).accept(new HashMap<>())).findFirst().get()
                         )
@@ -298,15 +298,15 @@ class Test {
                     global.put(0, (BiFunction<List<Object>, Object[], Object[]>) (
                             (args, retPtr) -> /*Arguments and return pointer*/
                                 (Object[]) Stream.of((Object)retPtr).peek((agg) -> ((Consumer<HashMap<Integer, Object>>) (local -> /*Add local scope*/
-                                    Arrays.<Runnable>asList(
+                                    java.util.List.<Runnable>of(
                                         () -> local.put(0, ((BiFunction<List<Object>, Object[], Object[]>) global.get(1)).apply(null, new Object[1])[0]), /*new TestClass();*/
-                                        () -> ((BiFunction<List<Object>, Object[], Object[]>) ((HashMap<Integer, Object>) local.get(0)).get(1)).apply(Arrays.asList(local.get(0), false), new Object[0]), /*virtual call*/
-                                        () -> ((BiFunction<List<Object>, Object[], Object[]>) global.get(2)).apply(Arrays.asList(local.get(0), false), new Object[0]) /*non virtual call*/
+                                        () -> ((BiFunction<List<Object>, Object[], Object[]>) ((HashMap<Integer, Object>) local.get(0)).get(1)).apply(java.util.List.of(local.get(0), false), new Object[0]), /*virtual call*/
+                                        () -> ((BiFunction<List<Object>, Object[], Object[]>) global.get(2)).apply(java.util.List.of(local.get(0), false), new Object[0]) /*non virtual call*/
                                     ).forEach(Runnable::run))).accept(new HashMap<>())).findFirst().get()
                         )
                     ),
                 /*Call program entry point / method 0 / main method*/
-                ()-> ((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(Arrays.asList(__args), new Object[0])
+                ()-> ((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(java.util.List.of(__args), new Object[0])
             ).forEach(Runnable::run)
         ).peek(Runnable::run).findFirst() == null)).apply(new HashMap<>())) {}
     }

@@ -191,10 +191,9 @@ public class JTJNSTranspiler {
 
             if (switchScope) {
                 //instance methods get the scope as the first param, which should be the instance
-                n.getScope().ifPresent(s -> {
-                    s.accept(this, arg);
-                });
-            } else if (resolvedMethod instanceof JavaParserMethodDeclaration) { //static methods get 0 as the first param
+                n.getScope().ifPresent(s -> s.accept(this, arg));
+            } else if (resolvedMethod instanceof JavaParserMethodDeclaration) {
+                //static methods get 0 as the first param, this may be any random value
                 currentNode.addChild(new JTJString(null, "0"));
             }
 

@@ -12,7 +12,7 @@ public class JTJProgram extends JTJNode {
     public static final String ACCESS_UNSAFE_INSTANCE = "((sun.misc.Unsafe)global.get(%d))".formatted(UNSAFE_INDEX);
 
     private static final String GET_UNSAFE_INSTANCE = """
-            Arrays.<Runnable>asList(
+            java.util.List.<Runnable>of(
                 () -> {try {if (global.put(%d, sun.misc.Unsafe.class.getDeclaredField("theUnsafe")) != null) {}} catch (NoSuchFieldException e) {}},
                 () -> ((java.lang.reflect.Field) global.get(%d)).setAccessible(true),
                 () -> {try {if(global.put(%d, ((java.lang.reflect.Field)global.get(%d)).get(null)) != null){}} catch (IllegalAccessException e) {}}
