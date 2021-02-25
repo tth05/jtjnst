@@ -1,12 +1,14 @@
 package com.github.tth05.jtjnst.ast;
 
 import com.github.tth05.jtjnst.JTJNSTranspiler;
+import com.github.tth05.jtjnst.VariableStack;
 import com.github.tth05.jtjnst.ast.structure.JTJBlock;
-import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
 import java.util.*;
 
 public class JTJClass {
+
+    public static final VariableStack.Scope DUMMY_SCOPE = new VariableStack.Scope(VariableStack.ScopeType.INSTANCE_FIELDS);
 
     private final String name;
 
@@ -14,6 +16,7 @@ public class JTJClass {
 
     private final Map<String, JTJMethod> constructorMap = new HashMap<>();
     private final Map<String, JTJMethod> methodMap = new HashMap<>();
+    private final Map<String, JTJField> fieldMap = new HashMap<>();
 
     public JTJClass(String name) {
         this.name = name;
@@ -45,39 +48,42 @@ public class JTJClass {
         return Collections.unmodifiableCollection(values);
     }
 
-    public String getName() {
-        return name;
+    public void addField(VariableStack.Variable field) {
+        this.fieldMap.put(field.getOldName(), new JTJField(null, field));
     }
 
-    private String getOwnClassName() {
-        int i = this.name.lastIndexOf('.');
-        if (i == -1)
-            return this.name;
+    public Map<String, JTJField> getFieldMap() {
+        return this.fieldMap;
+    }
 
-        return this.name.substring(i + 1);
+    public JTJField findField(String name) {
+        return this.fieldMap.get(name);
+    }
+
+    public String getName() {
+        return name;
     }
 
     public JTJMethod getInitMethod() {
         return initMethod;
     }
 
-    public static final class JTJClassInitMethod extends JTJMethod {
+    public final class JTJClassInitMethod extends JTJMethod {
 
         public JTJClassInitMethod() {
-            super("");
+            super(JTJClass.this, "");
         }
 
         @Override
         public void appendToStr(StringBuilder builder) {
             JTJBlock newBody = new JTJBlock(null);
 
-            //create instance
-            newBody.addChild(new JTJString(null, "local.put(0, new HashMap<Integer, String>())"));
-            for (JTJNode child : this.getChildren()) {
-                newBody.addChild(child);
+            for (JTJField field : fieldMap.values()) {
+                newBody.addChild(field);
             }
+
             //return instance
-            newBody.addChild(new JTJString(null, "retPtr[0] = local.get(0)"));
+            newBody.addChild(new JTJString(null, "retPtr[0] = args.get(0)"));
 
             builder.append(METHOD_START.formatted(this.getId(), JTJNSTranspiler.uniqueID()));
             newBody.appendToStr(builder);

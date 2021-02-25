@@ -37,6 +37,7 @@ public class JTJObjectCreation extends JTJChildrenNode {
             this.addChildToFront(new JTJString(null,
                     JTJMethodCall.METHOD_CALL_START_WITH_RETURN.formatted("Object") +
                     JTJMethodCall.METHOD_CALL_START.formatted(jtjClass.getInitMethod().getId()) +
+                    "new java.util.HashMap<Integer,String>()" +
                     JTJMethodCall.METHOD_CALL_END_WITH_RETURN));
 
             builder.append(JTJMethodCall.METHOD_CALL_START_WITH_RETURN.formatted(TYPE_CAST));

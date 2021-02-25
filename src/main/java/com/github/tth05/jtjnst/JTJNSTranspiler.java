@@ -9,14 +9,20 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserFieldDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
 import com.github.tth05.jtjnst.ast.statement.JTJIfStatement;
 import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
-import com.github.tth05.jtjnst.ast.structure.*;
+import com.github.tth05.jtjnst.ast.structure.JTJBlock;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.structure.JTJEmpty;
+import com.github.tth05.jtjnst.ast.structure.JTJStatement;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableAccess;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableAssign;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableDeclaration;
@@ -73,19 +79,24 @@ public class JTJNSTranspiler {
                 }
 
                 for (BodyDeclaration<?> member : type.getMembers()) {
-                    //TODO: constructor declaration
                     if (member instanceof MethodDeclaration) {
                         MethodDeclaration methodDeclaration = (MethodDeclaration) member;
                         String signature = ASTUtils.generateSignatureForMethod(methodDeclaration);
 
                         //detect main method
                         if (ASTUtils.isMainMethod(signature, methodDeclaration)) {
-                            clazz.addMethod(new JTJMethod(signature, true));
+                            clazz.addMethod(new JTJMethod(clazz, signature, true));
                         } else {
-                            clazz.addMethod(new JTJMethod(signature));
+                            clazz.addMethod(new JTJMethod(clazz, signature));
                         }
                     } else if (member instanceof ConstructorDeclaration) {
-                        clazz.addConstructor(new JTJMethod(ASTUtils.generateSignatureForMethod((ConstructorDeclaration) member)));
+                        clazz.addConstructor(new JTJMethod(clazz, ASTUtils.generateSignatureForMethod((ConstructorDeclaration) member)));
+                    } else if (member instanceof FieldDeclaration) {
+                        NodeList<VariableDeclarator> variables = ((FieldDeclaration) member).getVariables();
+                        for (VariableDeclarator variable : variables) {
+                            clazz.addField(new VariableStack.Variable(JTJClass.DUMMY_SCOPE, variable.getNameAsString(),
+                                    JTJNSTranspiler.uniqueID(), variable.getTypeAsString()));
+                        }
                     }
                 }
 
@@ -93,12 +104,12 @@ public class JTJNSTranspiler {
             }
         }
 
+        //parse all methods and fields
         for (CompilationUnit unit : units) {
             for (TypeDeclaration<?> type : unit.getTypes()) {
                 JTJClass clazz = this.program.findClass(ASTUtils.resolveFullName(type));
 
                 for (BodyDeclaration<?> member : type.getMembers()) {
-                    //TODO: constructor declaration
                     if (member instanceof MethodDeclaration) {
                         JTJMethod jtjMethod = clazz.findMethod(ASTUtils.generateSignatureForMethod((MethodDeclaration) member));
 
@@ -110,6 +121,8 @@ public class JTJNSTranspiler {
 
                         //return instance from constructor
                         jtjMethod.addChild(new JTJString(null, "retPtr[0] = args.get(0)"));
+                    } else if (member instanceof FieldDeclaration) {
+                        member.accept(new CustomVisitor(null), null);
                     } else {
                         throw new UnsupportedOperationException("Declarations of type " + member.getClass() + " not supported");
                     }
@@ -157,6 +170,15 @@ public class JTJNSTranspiler {
 
             currentNode = currentMethod;
 
+            if (!method.isStatic()) {
+                variableStack.push(VariableStack.ScopeType.INSTANCE_FIELDS);
+                currentMethod.getContainingClass().getFieldMap().forEach((k, v) -> {
+                    variableStack.addVariable(v.getVariable());
+                });
+            }
+
+            variableStack.push(VariableStack.ScopeType.THIS_INSTANCE);
+            variableStack.addVariable("this", JTJObjectCreation.TYPE_CAST);
             variableStack.push(VariableStack.ScopeType.PARAM);
             for (Parameter parameter : method.getParameters()) {
                 variableStack.addVariable(parameter.getNameAsString(), parameter.getTypeAsString());
@@ -167,6 +189,10 @@ public class JTJNSTranspiler {
 
             variableStack.pop();
             variableStack.pop();
+            variableStack.pop();
+
+            if (!method.isStatic())
+                variableStack.pop();
             currentNode = null;
         }
 
@@ -201,10 +227,7 @@ public class JTJNSTranspiler {
             if (switchScope) {
                 //instance methods get the scope as the first param, which should be the instance
                 n.getScope().ifPresent(s -> s.accept(this, arg));
-            } /*else if (resolvedMethod instanceof JavaParserMethodDeclaration) {
-                //static methods get 0 as the first param, this may be any random value
-                currentNode.addChild(new JTJString(null, "0"));
-            }*/ //TODO:
+            }
 
             n.getArguments().forEach(p -> {
                 pushNode(new JTJEmpty(currentNode));
@@ -237,7 +260,6 @@ public class JTJNSTranspiler {
                     variable.getScope().getScopeType().getMapName(),
                     variable.getNewName()));
 
-            //TODO: types
             n.getInitializer().ifPresent(l -> l.accept(this, arg));
             popNode();
         }
@@ -259,18 +281,73 @@ public class JTJNSTranspiler {
         public void visit(NameExpr n, Object arg) {
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
 
-            if (variable != null)
+            if (variable != null) {
                 currentNode.addChild(new JTJVariableAccess(currentNode, variable, program));
-            else
+            } else {
                 currentNode.addChild(new JTJString(currentNode, n.calculateResolvedType().describe()));
+            }
         }
 
         @Override
         public void visit(FieldAccessExpr n, Object arg) {
-            n.getScope().accept(this, arg);
-            currentNode.addChild(new JTJString(currentNode, "."));
-            //TODO: fields of our custom types
-            currentNode.addChild(new JTJString(currentNode, n.getNameAsString()));
+            ResolvedValueDeclaration resolvedValueDeclaration = n.resolve();
+            //just append the field name for all other fields
+            if (!(resolvedValueDeclaration instanceof JavaParserFieldDeclaration)) {
+                n.getScope().accept(this, arg);
+                currentNode.addChild(new JTJString(currentNode, "."));
+                currentNode.addChild(new JTJString(currentNode, n.getNameAsString()));
+                return;
+            }
+
+            String declaringType = ASTUtils.resolveFullName(
+                    ((JavaParserClassDeclaration) ((JavaParserFieldDeclaration) resolvedValueDeclaration).declaringType()).getWrappedNode()
+            );
+
+            JTJClass jtjClass = program.findClass(declaringType);
+
+            if (jtjClass != null) {
+                VariableStack.Variable instanceVar = variableStack.findScope(VariableStack.ScopeType.THIS_INSTANCE).getVariable("this");
+                JTJField field = jtjClass.findField(n.getNameAsString());
+                if (field == null)
+                    throw new IllegalStateException();
+
+                //TODO: fields of custom types need a cast to Map instead
+                currentNode.addChild(new JTJString(currentNode, "((%s)".formatted(field.getVariable().getType())));
+
+                //ignore "this" keyword
+                if (!n.getScope().isThisExpr())
+                    n.getScope().accept(this, arg);
+                else
+                    currentNode.addChild(new JTJVariableAccess(currentNode, instanceVar, program));
+
+                currentNode.addChild(new JTJString(currentNode, ".get(%d))".formatted(field.getVariable().getNewName())));
+            }
+        }
+
+        @Override
+        public void visit(FieldDeclaration n, Object arg) {
+            String declaringType = ASTUtils.resolveFullName(
+                    ((JavaParserClassDeclaration) n.resolve().declaringType()).getWrappedNode()
+            );
+
+            JTJClass jtjClass = program.findClass(declaringType);
+
+            for (VariableDeclarator variable : n.getVariables()) {
+                pushNode(jtjClass.findField(variable.getNameAsString()));
+                variable.getInitializer().ifPresentOrElse(
+                        l -> l.accept(this, arg),
+                        () -> {
+                            currentNode.addChild(new JTJString(currentNode,
+                                    switch (variable.getTypeAsString()) {
+                                        case "byte", "short", "int", "char", "float", "double", "long" -> "0";
+                                        case "boolean" -> "false";
+                                        default -> "null";
+                                    }
+                            ));
+                        }
+                );
+                popNode();
+            }
         }
 
         @Override
@@ -515,8 +592,14 @@ public class JTJNSTranspiler {
         }
 
         private void popNode() {
-            currentNode.getParent().addChild(currentNode);
-            currentNode = currentNode.getParent();
+            JTJChildrenNode parent = currentNode.getParent();
+            if (parent == null) {
+                currentNode = null;
+                return;
+            }
+
+            parent.addChild(currentNode);
+            currentNode = parent;
         }
     }
 }

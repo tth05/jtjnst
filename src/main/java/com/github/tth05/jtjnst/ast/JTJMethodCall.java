@@ -39,6 +39,10 @@ public class JTJMethodCall extends JTJChildrenNode {
 
             builder.append(METHOD_CALL_START.formatted(jtjMethod.getId()));
 
+            //add dummy argument for static methods
+            if (methodDeclaration.isStatic())
+                addChildToFront(new JTJString(null, "0"));
+
             appendChildrenToBuilderWithSeparator(builder, ",");
 
             //get return value from returned list
