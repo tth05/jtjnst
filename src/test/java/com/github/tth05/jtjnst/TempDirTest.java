@@ -7,5 +7,5 @@ import java.nio.file.Path;
 public abstract class TempDirTest {
 
     @TempDir
-    static Path tmpDir;
+    public static Path tmpDir;
 }
