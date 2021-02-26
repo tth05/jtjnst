@@ -279,6 +279,19 @@ public class JTJNSTranspiler {
         }
 
         @Override
+        public void visit(ConditionalExpr n, Object arg) {
+            pushNode(new JTJEmpty(currentNode));
+
+            n.getCondition().accept(this, arg);
+            currentNode.addChild(new JTJString(currentNode, "?"));
+            n.getThenExpr().accept(this, arg);
+            currentNode.addChild(new JTJString(currentNode, ":"));
+            n.getElseExpr().accept(this, arg);
+
+            popNode();
+        }
+
+        @Override
         public void visit(ForStmt n, Object arg) {
             //convert for loop to while loop
             variableStack.push(VariableStack.ScopeType.FOR_LOOP);

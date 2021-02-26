@@ -50,4 +50,19 @@ public class IfStatementTest extends TempDirTest {
 
         JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi2", "Hi6");
     }
+
+    @Test
+    public void testTernaryOperator() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        System.out.println(args.length == 0 ? "Hi" + 1 : 2);
+                        System.out.println(args.length != 0 ? "Hi" + 1 : 2);
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi1", "2");
+    }
 }
