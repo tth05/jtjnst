@@ -6,6 +6,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
@@ -143,6 +144,7 @@ public class JTJNSTranspiler {
 
     private class CustomVisitor extends VoidVisitorAdapter<Object> {
 
+
         private final JTJMethod currentMethod;
         private JTJChildrenNode currentNode;
 
@@ -266,8 +268,23 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(AssignExpr n, Object arg) {
-            if (n.getTarget().isNameExpr()) {
-                pushNode(new JTJVariableAssign(currentNode, variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString())));
+            if (n.getTarget() instanceof NodeWithSimpleName<?>) {
+                String variableName = ((NodeWithSimpleName<?>) n.getTarget()).getNameAsString();
+                VariableStack.Variable variable = n.getTarget().isFieldAccessExpr() ?
+                        findVariableFromFieldAccess((FieldAccessExpr) n.getTarget()) :
+                        variableStack.findVariable(variableName);
+
+                JTJVariableAssign jtjVariableAssign = new JTJVariableAssign(currentNode, variable);
+
+                //if we're not accessing a field of the current instance -> actually parse the scope
+                if (n.getTarget().isFieldAccessExpr() && !n.getTarget().asFieldAccessExpr().getScope().isThisExpr()) {
+                    pushNode(new JTJEmpty(null));
+                    n.getTarget().asFieldAccessExpr().getScope().accept(this, arg);
+                    jtjVariableAssign.setScope(currentNode.asString());
+                    popNode();
+                }
+
+                pushNode(jtjVariableAssign);
                 n.getValue().accept(this, arg);
                 popNode();
             } else if (n.getTarget().isArrayAccessExpr()) {
@@ -363,22 +380,34 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(UnaryExpr n, Object arg) {
-            String operator = n.getOperator().asString().length() > 1 ?
-                    n.getOperator().asString().substring(1) + "1" :
-                    n.getOperator().asString();
+            String operator = n.getOperator().asString();
+            //i++ -> i + 1
+            operator = operator.length() > 1 ? operator.substring(1) + "1" : operator;
 
-            //variable access needs to use compute for prefix operators
-            if (n.getExpression().isNameExpr()) {
-                VariableStack.Variable variable = variableStack.findVariable(n.getExpression().asNameExpr().getNameAsString());
-                String method = n.isPrefix() ? "compute" : "put";
+            if (n.getExpression() instanceof NodeWithSimpleName<?>) {
+                String variableName = ((NodeWithSimpleName<?>) n.getExpression()).getNameAsString();
+                VariableStack.Variable variable = n.getExpression().isFieldAccessExpr() ?
+                        findVariableFromFieldAccess((FieldAccessExpr) n.getExpression()) :
+                        variableStack.findVariable(variableName);
 
-                currentNode.addChild(new JTJString(currentNode, variable.getScope().getScopeType().getMapName() +
-                                                                "." + method + "(" + variable.getNewName() + "," +
-                                                                (n.isPrefix() ? "(k" + uniqueID() + ", v" + uniqueID() + ") ->" : "")));
+                JTJVariableAssign jtjVariableAssign = new JTJVariableAssign(currentNode, variable, n.isPostfix());
+                JTJVariableAccess jtjVariableAccess = new JTJVariableAccess(currentNode, variable, program);
 
-                currentNode.addChild(new JTJVariableAccess(currentNode, variable, program));
+                //if we're not accessing a field of the current instance -> actually parse the scope
+                if (n.getExpression().isFieldAccessExpr() && !n.getExpression().asFieldAccessExpr().getScope().isThisExpr()) {
+                    pushNode(new JTJEmpty(null));
+                    n.getExpression().asFieldAccessExpr().getScope().accept(this, arg);
+
+                    String variableScope = currentNode.asString();
+                    jtjVariableAssign.setScope(variableScope);
+                    jtjVariableAccess.setScope(variableScope);
+                    popNode();
+                }
+
+                pushNode(jtjVariableAssign);
+                currentNode.addChild(jtjVariableAccess);
                 currentNode.addChild(new JTJString(currentNode, operator));
-                currentNode.addChild(new JTJString(currentNode, ")"));
+                popNode();
             } else {
                 if (n.isPrefix())
                     currentNode.addChild(new JTJString(currentNode, operator));
@@ -585,6 +614,24 @@ public class JTJNSTranspiler {
         @Override
         public void visit(NullLiteralExpr n, Object arg) {
             currentNode.addChild(new JTJString(currentNode, "null"));
+        }
+
+        private VariableStack.Variable findVariableFromFieldAccess(FieldAccessExpr expr) {
+            ResolvedValueDeclaration declaration = expr.resolve();
+
+            if (!(declaration instanceof JavaParserFieldDeclaration))
+                return null;
+
+            JTJClass jtjClass = program.findClass(((JavaParserFieldDeclaration) declaration).declaringType().getQualifiedName());
+
+            if (jtjClass == null)
+                throw new IllegalStateException();
+
+            JTJField jtjField = jtjClass.findField(expr.getNameAsString());
+            if (jtjField == null)
+                throw new IllegalStateException();
+
+            return jtjField.getVariable();
         }
 
         private void pushNode(JTJChildrenNode node) {

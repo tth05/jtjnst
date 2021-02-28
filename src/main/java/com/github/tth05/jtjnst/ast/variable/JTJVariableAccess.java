@@ -15,11 +15,17 @@ public class JTJVariableAccess extends JTJNode {
 
     private final VariableStack.Variable variable;
     private final JTJProgram program;
+    private String scope;
 
     public JTJVariableAccess(JTJChildrenNode parent, VariableStack.Variable variable, JTJProgram program) {
         super(parent);
         this.variable = variable;
         this.program = program;
+        this.scope = variable.getScope().getScopeType().getMapName();
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
     }
 
     @Override
@@ -46,7 +52,7 @@ public class JTJVariableAccess extends JTJNode {
                     .append("(\"\" + ");
         }
 
-        builder.append(variable.getScope().getScopeType().getMapName());
+        builder.append(this.scope);
         builder.append(VARIABLE_ACCESS_MIDDLE_2);
         builder.append(variable.getNewName());
         builder.append(VARIABLE_ACCESS_END);

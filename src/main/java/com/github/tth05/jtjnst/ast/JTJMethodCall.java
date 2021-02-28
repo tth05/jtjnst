@@ -26,6 +26,8 @@ public class JTJMethodCall extends JTJChildrenNode {
     public void appendToStr(StringBuilder builder) {
         if (declaration instanceof JavaParserMethodDeclaration) {
             String returnType = declaration.getReturnType().isVoid() ? null : declaration.getReturnType().describe();
+            if (this.program.findClass(returnType) != null)
+                returnType = JTJObjectCreation.TYPE_CAST;
 
             MethodDeclaration methodDeclaration = ((JavaParserMethodDeclaration) declaration).getWrappedNode();
 

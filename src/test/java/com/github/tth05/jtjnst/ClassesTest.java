@@ -1,6 +1,5 @@
 package com.github.tth05.jtjnst;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class ClassesTest extends TempDirTest {
@@ -91,7 +90,6 @@ public class ClassesTest extends TempDirTest {
         JavaCompilerHelper.runAndExpect(input, tmpDir, "0", "Hi", "0", "0");
     }
 
-    @Disabled
     @Test
     public void testAssignField() {
         // language=Java
@@ -102,22 +100,28 @@ public class ClassesTest extends TempDirTest {
                 
                     public Test() {
                         i = 5;
-                        System.out.println(++this.i);
+                        System.out.println(++i);
                     }
                     
                     public void sayHi() {
                         System.out.println("Hi");
                         System.out.println(++this.i);
+                        i++;
+                    }
+                    
+                    public static Test getInstance() {
+                        return new Test();
                     }
                     
                     public static void main(String[] args) {
                         Test test = new Test();
                         test.sayHi();
                         System.out.println(++test.i);
+                        getInstance().i = 6;
                     }
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "0", "0");
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "6", "Hi", "7", "9", "6");
     }
 }
