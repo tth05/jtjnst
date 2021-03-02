@@ -2,7 +2,7 @@ package com.github.tth05.jtjnst.ast.structure;
 
 public class JTJBlock extends JTJChildrenNode {
 
-    public static final String BLOCK_START = "Arrays.<Runnable>asList(";
+    public static final String BLOCK_START = "java.util.List.<Runnable>of(";
     public static final String BLOCK_END = ").forEach(Runnable::run)";
     public static final String BLOCK_END_NO_RUN = ")";
 

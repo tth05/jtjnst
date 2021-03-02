@@ -6,20 +6,28 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserFieldDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
 import com.github.tth05.jtjnst.ast.statement.JTJIfStatement;
 import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
-import com.github.tth05.jtjnst.ast.structure.*;
-import com.github.tth05.jtjnst.util.ASTUtils;
+import com.github.tth05.jtjnst.ast.structure.JTJBlock;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
+import com.github.tth05.jtjnst.ast.structure.JTJEmpty;
+import com.github.tth05.jtjnst.ast.structure.JTJStatement;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableAccess;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableAssign;
 import com.github.tth05.jtjnst.ast.variable.JTJVariableDeclaration;
+import com.github.tth05.jtjnst.util.ASTUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,17 +73,30 @@ public class JTJNSTranspiler {
         for (CompilationUnit unit : units) {
             for (TypeDeclaration<?> type : unit.getTypes()) {
                 JTJClass clazz = new JTJClass(ASTUtils.resolveFullName(type));
+
+                //force add default constructor
+                if (type.getConstructors().isEmpty()) {
+                    type.addConstructor();
+                }
+
                 for (BodyDeclaration<?> member : type.getMembers()) {
-                    //TODO: constructor declaration
                     if (member instanceof MethodDeclaration) {
                         MethodDeclaration methodDeclaration = (MethodDeclaration) member;
-                        String signature = ASTUtils.generateSignature(methodDeclaration);
+                        String signature = ASTUtils.generateSignatureForMethod(methodDeclaration);
 
                         //detect main method
                         if (ASTUtils.isMainMethod(signature, methodDeclaration)) {
-                            clazz.addMethod(new JTJMethod(signature, true));
+                            clazz.addMethod(new JTJMethod(clazz, signature, true));
                         } else {
-                            clazz.addMethod(new JTJMethod(signature));
+                            clazz.addMethod(new JTJMethod(clazz, signature));
+                        }
+                    } else if (member instanceof ConstructorDeclaration) {
+                        clazz.addConstructor(new JTJMethod(clazz, ASTUtils.generateSignatureForMethod((ConstructorDeclaration) member)));
+                    } else if (member instanceof FieldDeclaration) {
+                        NodeList<VariableDeclarator> variables = ((FieldDeclaration) member).getVariables();
+                        for (VariableDeclarator variable : variables) {
+                            clazz.addField(new VariableStack.Variable(JTJClass.DUMMY_SCOPE, variable.getNameAsString(),
+                                    JTJNSTranspiler.uniqueID(), variable.getTypeAsString()));
                         }
                     }
                 }
@@ -83,18 +104,28 @@ public class JTJNSTranspiler {
                 this.program.addClass(clazz);
             }
         }
-//        type.accept(new CustomVisitor(clazz), null);
 
+        //parse all methods and fields
         for (CompilationUnit unit : units) {
             for (TypeDeclaration<?> type : unit.getTypes()) {
                 JTJClass clazz = this.program.findClass(ASTUtils.resolveFullName(type));
 
                 for (BodyDeclaration<?> member : type.getMembers()) {
-                    //TODO: constructor declaration
                     if (member instanceof MethodDeclaration) {
-                        JTJMethod jtjMethod = clazz.findMethod(ASTUtils.generateSignature((MethodDeclaration) member));
+                        JTJMethod jtjMethod = clazz.findMethod(ASTUtils.generateSignatureForMethod((MethodDeclaration) member));
 
                         member.accept(new CustomVisitor(jtjMethod), null);
+                    } else if (member instanceof ConstructorDeclaration) {
+                        JTJMethod jtjMethod = clazz.findConstructor(ASTUtils.generateSignatureForMethod((ConstructorDeclaration) member));
+
+                        member.accept(new CustomVisitor(jtjMethod), null);
+
+                        //return instance from constructor
+                        jtjMethod.addChild(new JTJString(null, "retPtr[0] = args.get(0)"));
+                    } else if (member instanceof FieldDeclaration) {
+                        member.accept(new CustomVisitor(null), null);
+                    } else {
+                        throw new UnsupportedOperationException("Declarations of type " + member.getClass() + " not supported");
                     }
                 }
             }
@@ -113,6 +144,7 @@ public class JTJNSTranspiler {
 
     private class CustomVisitor extends VoidVisitorAdapter<Object> {
 
+
         private final JTJMethod currentMethod;
         private JTJChildrenNode currentNode;
 
@@ -121,19 +153,48 @@ public class JTJNSTranspiler {
         }
 
         @Override
+        public void visit(ConstructorDeclaration n, Object arg) {
+            handleMethod(n, n.getBody());
+        }
+
+        @Override
+        public void visit(ExplicitConstructorInvocationStmt n, Object arg) {
+            super.visit(n, arg);
+        }
+
+        @Override
         public void visit(MethodDeclaration n, Object arg) {
+            handleMethod(n, n.getBody().get());
+        }
+
+        private void handleMethod(CallableDeclaration<?> method, BlockStmt body) {
+            //TODO: throws & return
+
             currentNode = currentMethod;
 
+            if (!method.isStatic()) {
+                variableStack.push(VariableStack.ScopeType.INSTANCE_FIELDS);
+                currentMethod.getContainingClass().getFieldMap().forEach((k, v) -> {
+                    variableStack.addVariable(v.getVariable());
+                });
+            }
+
+            variableStack.push(VariableStack.ScopeType.THIS_INSTANCE);
+            variableStack.addVariable("this", JTJObjectCreation.TYPE_CAST);
             variableStack.push(VariableStack.ScopeType.PARAM);
-            for (Parameter parameter : n.getParameters()) {
+            for (Parameter parameter : method.getParameters()) {
                 variableStack.addVariable(parameter.getNameAsString(), parameter.getTypeAsString());
             }
             variableStack.push(VariableStack.ScopeType.LOCAL);
 
-            super.visit(n, arg);
+            body.accept(this, null);
 
             variableStack.pop();
             variableStack.pop();
+            variableStack.pop();
+
+            if (!method.isStatic())
+                variableStack.pop();
             currentNode = null;
         }
 
@@ -148,14 +209,28 @@ public class JTJNSTranspiler {
         public void visit(MethodCallExpr n, Object arg) {
             ResolvedMethodDeclaration resolvedMethod = n.resolve();
 
-            n.getScope().ifPresent(s -> {
-                //if the scope is a class name, we don't want to parse it
-                if (!(s instanceof NameExpr))
-                    s.accept(this, arg);
-            });
+            boolean isStatic = resolvedMethod.isStatic();
+            boolean isJavaParserDeclaration = resolvedMethod instanceof JavaParserMethodDeclaration;
+            boolean switchScope = !isStatic && isJavaParserDeclaration;
+
+            //If we call a method on a custom instance, the scope will the first parameter of that method.
+            //  Otherwise it will come first as usual.
+            if (!switchScope) {
+                n.getScope().ifPresent(s -> {
+                    //don't parse the scope for static methods
+                    if (!isStatic)
+                        s.accept(this, arg);
+                });
+            }
 
             //TODO: type arguments
             pushNode(new JTJMethodCall(this.currentNode, program, resolvedMethod));
+
+            if (switchScope) {
+                //instance methods get the scope as the first param, which should be the instance
+                n.getScope().ifPresent(s -> s.accept(this, arg));
+            }
+
             n.getArguments().forEach(p -> {
                 pushNode(new JTJEmpty(currentNode));
                 p.accept(this, arg);
@@ -183,19 +258,33 @@ public class JTJNSTranspiler {
 
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
             pushNode(new JTJVariableDeclaration(
+                    currentNode,
                     variable.getScope().getScopeType().getMapName(),
-                    variable.getNewName(),
-                    currentNode));
+                    variable.getNewName()));
 
-            //TODO: types
             n.getInitializer().ifPresent(l -> l.accept(this, arg));
             popNode();
         }
 
         @Override
         public void visit(AssignExpr n, Object arg) {
-            if (n.getTarget().isNameExpr()) {
-                pushNode(new JTJVariableAssign(currentNode, variableStack.findVariable(n.getTarget().asNameExpr().getNameAsString())));
+            if (n.getTarget() instanceof NodeWithSimpleName<?>) {
+                String variableName = ((NodeWithSimpleName<?>) n.getTarget()).getNameAsString();
+                VariableStack.Variable variable = n.getTarget().isFieldAccessExpr() ?
+                        findVariableFromFieldAccess((FieldAccessExpr) n.getTarget()) :
+                        variableStack.findVariable(variableName);
+
+                JTJVariableAssign jtjVariableAssign = new JTJVariableAssign(currentNode, variable);
+
+                //if we're not accessing a field of the current instance -> actually parse the scope
+                if (n.getTarget().isFieldAccessExpr() && !n.getTarget().asFieldAccessExpr().getScope().isThisExpr()) {
+                    pushNode(new JTJEmpty(null));
+                    n.getTarget().asFieldAccessExpr().getScope().accept(this, arg);
+                    jtjVariableAssign.setScope(currentNode.asString());
+                    popNode();
+                }
+
+                pushNode(jtjVariableAssign);
                 n.getValue().accept(this, arg);
                 popNode();
             } else if (n.getTarget().isArrayAccessExpr()) {
@@ -209,18 +298,76 @@ public class JTJNSTranspiler {
         public void visit(NameExpr n, Object arg) {
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
 
-            if (variable != null)
-                currentNode.addChild(new JTJVariableAccess(currentNode, variable));
-            else
+            if (variable != null) {
+                currentNode.addChild(new JTJVariableAccess(currentNode, variable, program));
+            } else {
                 currentNode.addChild(new JTJString(currentNode, n.calculateResolvedType().describe()));
+            }
         }
 
         @Override
         public void visit(FieldAccessExpr n, Object arg) {
-            n.getScope().accept(this, arg);
-            currentNode.addChild(new JTJString(currentNode, "."));
-            //TODO: fields of our custom types
-            currentNode.addChild(new JTJString(currentNode, n.getNameAsString()));
+            ResolvedValueDeclaration resolvedValueDeclaration = n.resolve();
+            //just append the field name for all other fields
+            if (!(resolvedValueDeclaration instanceof JavaParserFieldDeclaration)) {
+                n.getScope().accept(this, arg);
+                currentNode.addChild(new JTJString(currentNode, "."));
+                currentNode.addChild(new JTJString(currentNode, n.getNameAsString()));
+                return;
+            }
+
+            String declaringType = ASTUtils.resolveFullName(
+                    ((JavaParserClassDeclaration) ((JavaParserFieldDeclaration) resolvedValueDeclaration).declaringType()).getWrappedNode()
+            );
+
+            JTJClass jtjClass = program.findClass(declaringType);
+
+            if (jtjClass != null) {
+                VariableStack.Variable instanceVar = variableStack.findScope(VariableStack.ScopeType.THIS_INSTANCE).getVariable("this");
+                JTJField field = jtjClass.findField(n.getNameAsString());
+                if (field == null)
+                    throw new IllegalStateException();
+
+                JTJVariableAccess jtjVariableAccess = new JTJVariableAccess(currentNode, field.getVariable(), program);
+                currentNode = new JTJEmpty(currentNode);
+
+                //ignore "this" keyword
+                if (!n.getScope().isThisExpr())
+                    n.getScope().accept(this, arg);
+                else
+                    currentNode.addChild(new JTJVariableAccess(currentNode, instanceVar, program));
+
+                jtjVariableAccess.setScope(currentNode.asString());
+                currentNode = currentNode.getParent();
+
+                currentNode.addChild(jtjVariableAccess);
+            }
+        }
+
+        @Override
+        public void visit(FieldDeclaration n, Object arg) {
+            String declaringType = ASTUtils.resolveFullName(
+                    ((JavaParserClassDeclaration) n.resolve().declaringType()).getWrappedNode()
+            );
+
+            JTJClass jtjClass = program.findClass(declaringType);
+
+            for (VariableDeclarator variable : n.getVariables()) {
+                pushNode(jtjClass.findField(variable.getNameAsString()));
+                variable.getInitializer().ifPresentOrElse(
+                        l -> l.accept(this, arg),
+                        () -> {
+                            currentNode.addChild(new JTJString(currentNode,
+                                    switch (variable.getTypeAsString()) {
+                                        case "byte", "short", "int", "char", "float", "double", "long" -> "0";
+                                        case "boolean" -> "false";
+                                        default -> "null";
+                                    }
+                            ));
+                        }
+                );
+                popNode();
+            }
         }
 
         @Override
@@ -236,22 +383,34 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(UnaryExpr n, Object arg) {
-            String operator = n.getOperator().asString().length() > 1 ?
-                    n.getOperator().asString().substring(1) + "1" :
-                    n.getOperator().asString();
+            String operator = n.getOperator().asString();
+            //i++ -> i + 1
+            operator = operator.length() > 1 ? operator.substring(1) + "1" : operator;
 
-            //variable access needs to use compute for prefix operators
-            if (n.getExpression().isNameExpr()) {
-                VariableStack.Variable variable = variableStack.findVariable(n.getExpression().asNameExpr().getNameAsString());
-                String method = n.isPrefix() ? "compute" : "put";
+            if (n.getExpression() instanceof NodeWithSimpleName<?>) {
+                String variableName = ((NodeWithSimpleName<?>) n.getExpression()).getNameAsString();
+                VariableStack.Variable variable = n.getExpression().isFieldAccessExpr() ?
+                        findVariableFromFieldAccess((FieldAccessExpr) n.getExpression()) :
+                        variableStack.findVariable(variableName);
 
-                currentNode.addChild(new JTJString(currentNode, variable.getScope().getScopeType().getMapName() +
-                                                                "." + method + "(" + variable.getNewName() + "," +
-                                                                (n.isPrefix() ? "(k" + uniqueID() + ", v" + uniqueID() + ") ->" : "")));
+                JTJVariableAssign jtjVariableAssign = new JTJVariableAssign(currentNode, variable, n.isPostfix());
+                JTJVariableAccess jtjVariableAccess = new JTJVariableAccess(currentNode, variable, program);
 
-                currentNode.addChild(new JTJVariableAccess(currentNode, variable));
+                //if we're not accessing a field of the current instance -> actually parse the scope
+                if (n.getExpression().isFieldAccessExpr() && !n.getExpression().asFieldAccessExpr().getScope().isThisExpr()) {
+                    pushNode(new JTJEmpty(null));
+                    n.getExpression().asFieldAccessExpr().getScope().accept(this, arg);
+
+                    String variableScope = currentNode.asString();
+                    jtjVariableAssign.setScope(variableScope);
+                    jtjVariableAccess.setScope(variableScope);
+                    popNode();
+                }
+
+                pushNode(jtjVariableAssign);
+                currentNode.addChild(jtjVariableAccess);
                 currentNode.addChild(new JTJString(currentNode, operator));
-                currentNode.addChild(new JTJString(currentNode, ")"));
+                popNode();
             } else {
                 if (n.isPrefix())
                     currentNode.addChild(new JTJString(currentNode, operator));
@@ -369,7 +528,13 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(ObjectCreationExpr n, Object arg) {
-            currentNode.addChild(new JTJString(currentNode, n.getTokenRange().get().toString()));
+            pushNode(new JTJObjectCreation(currentNode, program, n.resolve()));
+            n.getArguments().forEach(p -> {
+                pushNode(new JTJEmpty(currentNode));
+                p.accept(this, arg);
+                popNode();
+            });
+            popNode();
         }
 
         @Override
@@ -454,13 +619,37 @@ public class JTJNSTranspiler {
             currentNode.addChild(new JTJString(currentNode, "null"));
         }
 
+        private VariableStack.Variable findVariableFromFieldAccess(FieldAccessExpr expr) {
+            ResolvedValueDeclaration declaration = expr.resolve();
+
+            if (!(declaration instanceof JavaParserFieldDeclaration))
+                return null;
+
+            JTJClass jtjClass = program.findClass(((JavaParserFieldDeclaration) declaration).declaringType().getQualifiedName());
+
+            if (jtjClass == null)
+                throw new IllegalStateException();
+
+            JTJField jtjField = jtjClass.findField(expr.getNameAsString());
+            if (jtjField == null)
+                throw new IllegalStateException();
+
+            return jtjField.getVariable();
+        }
+
         private void pushNode(JTJChildrenNode node) {
             currentNode = node;
         }
 
         private void popNode() {
-            currentNode.getParent().addChild(currentNode);
-            currentNode = currentNode.getParent();
+            JTJChildrenNode parent = currentNode.getParent();
+            if (parent == null) {
+                currentNode = null;
+                return;
+            }
+
+            parent.addChild(currentNode);
+            currentNode = parent;
         }
     }
 }

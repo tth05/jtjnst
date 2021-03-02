@@ -13,4 +13,10 @@ public abstract class JTJNode {
     }
 
     public abstract void appendToStr(StringBuilder builder);
+
+    public String asString() {
+        StringBuilder builder = new StringBuilder();
+        appendToStr(builder);
+        return builder.toString();
+    }
 }

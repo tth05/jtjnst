@@ -2,14 +2,15 @@ package com.github.tth05.jtjnst.util;
 
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.stmt.LabeledStmt;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
-import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
+import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 
 public class ASTUtils {
 
@@ -48,9 +49,9 @@ public class ASTUtils {
     }
 
     /**
-     * @return a jvm type signature of the given method; does not replace {@code .} with {@code /}
+     * @return a jvm type signature of the given method or constructor; does not replace {@code .} with {@code /}
      */
-    public static String generateSignature(MethodDeclaration declaration) {
+    public static String generateSignatureForMethod(CallableDeclaration<?> declaration) {
         StringBuilder signature = new StringBuilder(resolveFullName((TypeDeclaration<?>) declaration.getParentNode().get()))
                 .append(".")
                 .append(declaration.getNameAsString())
@@ -61,7 +62,9 @@ public class ASTUtils {
         }
 
         signature.append(")");
-        signature.append(getTypeSignatureFromType(declaration.getType().resolve()));
+        if (declaration instanceof MethodDeclaration)
+            signature.append(getTypeSignatureFromType(((MethodDeclaration) declaration).getType().resolve()));
+
         return signature.toString();
     }
 

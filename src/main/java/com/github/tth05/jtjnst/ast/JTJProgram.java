@@ -12,7 +12,7 @@ public class JTJProgram extends JTJNode {
     public static final String ACCESS_UNSAFE_INSTANCE = "((sun.misc.Unsafe)global.get(%d))".formatted(UNSAFE_INDEX);
 
     private static final String GET_UNSAFE_INSTANCE = """
-            Arrays.<Runnable>asList(
+            java.util.List.<Runnable>of(
                 () -> {try {if (global.put(%d, sun.misc.Unsafe.class.getDeclaredField("theUnsafe")) != null) {}} catch (NoSuchFieldException e) {}},
                 () -> ((java.lang.reflect.Field) global.get(%d)).setAccessible(true),
                 () -> {try {if(global.put(%d, ((java.lang.reflect.Field)global.get(%d)).get(null)) != null){}} catch (IllegalAccessException e) {}}
@@ -55,6 +55,16 @@ public class JTJProgram extends JTJNode {
         return null;
     }
 
+    public JTJMethod findConstructor(String name) {
+        for (JTJClass value : this.classMap.values()) {
+            JTJMethod method = value.findConstructor(name);
+            if (method != null)
+                return method;
+        }
+
+        return null;
+    }
+
     @Override
     public void appendToStr(StringBuilder builder) {
         builder.append(PROGRAM_START);
@@ -62,6 +72,11 @@ public class JTJProgram extends JTJNode {
         JTJBlock inner = new JTJBlock(null);
 
         for (JTJClass clazz : classMap.values()) {
+            //TODO: create init method which initializes instance fields and returns an instance
+            for (JTJMethod method : clazz.getConstructorMap()) {
+                inner.addChild(method);
+            }
+
             for (JTJMethod method : clazz.getMethodMap()) {
                 inner.addChild(method);
             }

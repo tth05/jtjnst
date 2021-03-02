@@ -8,17 +8,17 @@ public class JTJVariableDeclaration extends JTJChildrenNode {
     public static final String DECLARATION_END = ")";
 
     private final String mapName;
-    private final int name;
+    private final int newName;
 
-    public JTJVariableDeclaration(String mapName, int name, JTJChildrenNode parent) {
+    public JTJVariableDeclaration(JTJChildrenNode parent, String mapName, int newName) {
         super(parent);
         this.mapName = mapName;
-        this.name = name;
+        this.newName = newName;
     }
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(DECLARATION_START.formatted(mapName, name));
+        builder.append(DECLARATION_START.formatted(mapName, newName));
         appendChildrenToBuilder(builder);
         builder.append(DECLARATION_END);
     }

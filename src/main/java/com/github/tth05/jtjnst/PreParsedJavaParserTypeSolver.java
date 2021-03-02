@@ -7,8 +7,8 @@ import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -19,7 +19,7 @@ public class PreParsedJavaParserTypeSolver implements TypeSolver {
     private final Map<String, TypeDeclaration<?>> knownTypes = new HashMap<>();
 
     public PreParsedJavaParserTypeSolver(CompilationUnit... units) {
-        this(Arrays.asList(units));
+        this(List.of(units));
     }
 
     public PreParsedJavaParserTypeSolver(Iterable<CompilationUnit> units) {

@@ -16,6 +16,10 @@ public abstract class JTJChildrenNode extends JTJNode {
         this.children.add(node);
     }
 
+    public void addChildToFront(JTJNode node) {
+        this.children.add(0, node);
+    }
+
     protected void appendChildrenToBuilder(StringBuilder builder) {
         for (JTJNode child : this.children) {
             child.appendToStr(builder);

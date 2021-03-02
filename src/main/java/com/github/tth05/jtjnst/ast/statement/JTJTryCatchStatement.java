@@ -21,7 +21,7 @@ public class JTJTryCatchStatement extends JTJChildrenNode {
     private final JTJBlock catchBlock = new JTJIfRunnableBlock(this);
 
     //TODO: repalce with multiple catch blocks
-    private List<Pair<String, Integer>> exceptionsToCatch = new ArrayList<>();
+    private final List<Pair<String, Integer>> exceptionsToCatch = new ArrayList<>();
 
     public JTJTryCatchStatement(JTJChildrenNode parent) {
         super(parent);

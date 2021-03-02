@@ -8,7 +8,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,7 +27,7 @@ public class JavaCompilerHelper {
             ByteArrayOutputStream errStream = new ByteArrayOutputStream();
             PrintWriter errWriter = new PrintWriter(errStream);
             boolean result = compiler.getTask(errWriter, fileManager, null,
-                    Arrays.asList("--release", "15", "-nowarn"), null, javaFileObjects).call();
+                    List.of("--release", "15", "-nowarn"), null, javaFileObjects).call();
 
             if (!result)
                 System.err.write(errStream.toByteArray());
@@ -81,6 +81,6 @@ public class JavaCompilerHelper {
     }
 
     public static String concatLines(String... lines) {
-        return String.join(System.lineSeparator(), lines) + System.lineSeparator();
+        return String.join(System.lineSeparator(), lines) + (lines.length == 1 && lines[0].isBlank() ? "" : System.lineSeparator());
     }
 }

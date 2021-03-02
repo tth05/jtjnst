@@ -25,15 +25,17 @@ public class JTJMethod extends JTJChildrenNode {
 
     private final int id;
     private final String signature;
+    private final JTJClass jtjClass;
 
-    public JTJMethod(String signature) {
-        this(signature, false);
+    public JTJMethod(JTJClass jtjClass, String signature) {
+        this(jtjClass, signature, false);
     }
 
-    public JTJMethod(String signature, boolean mainMethod) {
+    public JTJMethod(JTJClass jtjClass, String signature, boolean mainMethod) {
         super(null);
         this.signature = signature;
         this.id = mainMethod ? 0 : JTJNSTranspiler.uniqueID();
+        this.jtjClass = jtjClass;
     }
 
     @Override
@@ -59,5 +61,9 @@ public class JTJMethod extends JTJChildrenNode {
 
     public String getSignature() {
         return this.signature;
+    }
+
+    public JTJClass getContainingClass() {
+        return this.jtjClass;
     }
 }

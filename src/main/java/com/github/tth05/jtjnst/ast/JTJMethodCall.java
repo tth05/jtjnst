@@ -8,10 +8,10 @@ import com.github.tth05.jtjnst.util.ASTUtils;
 
 public class JTJMethodCall extends JTJChildrenNode {
 
-    private static final String METHOD_CALL_START_WITH_RETURN = "((%s)";
-    private static final String METHOD_CALL_START = "((BiFunction<List<Object>, Object[], Object[]>)global.get(%d)).apply(Arrays.asList(";
-    private static final String METHOD_CALL_END = "), new Object[0])";
-    private static final String METHOD_CALL_END_WITH_RETURN = "), new Object[1])[0])";
+    public static final String METHOD_CALL_START_WITH_RETURN = "((%s)";
+    public static final String METHOD_CALL_START = "((BiFunction<List<Object>, Object[], Object[]>)global.get(%d)).apply(java.util.List.of(";
+    public static final String METHOD_CALL_END = "), new Object[0])";
+    public static final String METHOD_CALL_END_WITH_RETURN = "), new Object[1])[0])";
 
     private final JTJProgram program;
     private final ResolvedMethodDeclaration declaration;
@@ -26,21 +26,25 @@ public class JTJMethodCall extends JTJChildrenNode {
     public void appendToStr(StringBuilder builder) {
         if (declaration instanceof JavaParserMethodDeclaration) {
             String returnType = declaration.getReturnType().isVoid() ? null : declaration.getReturnType().describe();
+            if (this.program.findClass(returnType) != null)
+                returnType = JTJObjectCreation.TYPE_CAST;
 
             MethodDeclaration methodDeclaration = ((JavaParserMethodDeclaration) declaration).getWrappedNode();
-            //TODO:
-            if (!methodDeclaration.isStatic())
-                throw new UnsupportedOperationException();
 
-            JTJMethod jtjMethod = this.program.findMethod(ASTUtils.generateSignature(methodDeclaration));
+            JTJMethod jtjMethod = this.program.findMethod(ASTUtils.generateSignatureForMethod(methodDeclaration));
             if (jtjMethod == null)
-                throw new IllegalStateException();
+                throw new IllegalStateException("Member with signature " + ASTUtils.generateSignatureForMethod(methodDeclaration) + " not found");
 
             //add cast to start if method has return type
             if (returnType != null)
                 builder.append(METHOD_CALL_START_WITH_RETURN.formatted(returnType));
 
             builder.append(METHOD_CALL_START.formatted(jtjMethod.getId()));
+
+            //add dummy argument for static methods
+            if (methodDeclaration.isStatic())
+                addChildToFront(new JTJString(null, "0"));
+
             appendChildrenToBuilderWithSeparator(builder, ",");
 
             //get return value from returned list
