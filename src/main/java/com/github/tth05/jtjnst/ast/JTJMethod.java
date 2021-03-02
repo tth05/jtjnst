@@ -28,7 +28,7 @@ public class JTJMethod extends JTJChildrenNode {
 
     private final List<Integer> returnIds = new ArrayList<>();
 
-    private final int id;
+    private int id;
     private final String signature;
     private final JTJClass jtjClass;
 
@@ -41,6 +41,10 @@ public class JTJMethod extends JTJChildrenNode {
         this.signature = signature;
         this.id = mainMethod ? 0 : JTJNSTranspiler.uniqueID();
         this.jtjClass = jtjClass;
+    }
+
+    void setId(int id) {
+        this.id = id;
     }
 
     @Override

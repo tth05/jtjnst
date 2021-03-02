@@ -8,6 +8,7 @@ import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.stmt.*;
+import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
@@ -18,7 +19,9 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
+import com.github.tth05.jtjnst.ast.exception.JTJCatchBlock;
 import com.github.tth05.jtjnst.ast.exception.JTJThrow;
+import com.github.tth05.jtjnst.ast.exception.JTJTryCatchStatement;
 import com.github.tth05.jtjnst.ast.statement.JTJIfStatement;
 import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
 import com.github.tth05.jtjnst.ast.structure.JTJBlock;
@@ -255,7 +258,7 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(VariableDeclarator n, Object arg) {
-            variableStack.addVariable(n.getNameAsString(), n.getType().asString());
+            variableStack.addVariable(n.getNameAsString(), n.getType().resolve().describe());
 
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
             pushNode(new JTJVariableDeclaration(
@@ -540,6 +543,45 @@ public class JTJNSTranspiler {
                 popNode();
             });
             popNode();
+        }
+
+        @Override
+        public void visit(TryStmt n, Object arg) {
+            //TODO: try-with-resources
+            //TODO: finally
+            JTJTryCatchStatement tryCatchStatement = new JTJTryCatchStatement(currentNode);
+            currentNode = tryCatchStatement.getTryBlock();
+            n.getTryBlock().accept(this, arg);
+
+            for (CatchClause catchClause : n.getCatchClauses()) {
+                Type parameterType = catchClause.getParameter().getType();
+                String typeAsString = parameterType.resolve().describe();
+
+                variableStack.push(VariableStack.ScopeType.CATCH);
+                variableStack.addVariable(catchClause.getParameter().getNameAsString(),
+                        parameterType.isUnionType() ? "java.lang.Throwable" : typeAsString);
+
+                JTJCatchBlock catchBlock = tryCatchStatement.addCatchBlock(
+                        typeAsString.replace(" ", "").split("\\|")
+                );
+                catchBlock.setVariableName(catchClause.getParameter().getNameAsString());
+                currentNode = catchBlock;
+                catchClause.getBody().accept(this, arg);
+
+                variableStack.pop();
+            }
+
+            currentNode = tryCatchStatement.getParent();
+            currentNode.addChild(tryCatchStatement);
+        }
+
+        @Override
+        public void visit(ThrowStmt n, Object arg) {
+            pushNode(new JTJEmpty(currentNode));
+            n.getExpression().accept(this, arg);
+
+            currentNode.getParent().addChild(new JTJThrow(currentNode.getParent(), currentNode.asString()));
+            currentNode = currentNode.getParent();
         }
 
         @Override

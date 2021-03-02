@@ -114,7 +114,8 @@ public class VariableStack {
         THIS_INSTANCE("args"),
         PARAM("args"),
         LOCAL("local"),
-        FOR_LOOP("local");
+        FOR_LOOP("local"),
+        CATCH(null);
 
         private final String mapName;
 

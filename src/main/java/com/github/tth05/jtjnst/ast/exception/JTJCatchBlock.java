@@ -1,10 +1,15 @@
 package com.github.tth05.jtjnst.ast.exception;
 
 import com.github.tth05.jtjnst.JTJNSTranspiler;
+import com.github.tth05.jtjnst.ast.JTJString;
 import com.github.tth05.jtjnst.ast.statement.JTJIfRunnableBlock;
+import com.github.tth05.jtjnst.ast.statement.JTJIfStatement;
 import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class JTJCatchBlock extends JTJIfRunnableBlock {
 
@@ -13,15 +18,19 @@ public class JTJCatchBlock extends JTJIfRunnableBlock {
     private static final String CATCH_MIDDLE = "){";
     private static final String CATCH_END = "}";
 
-    private final String variableName = CATCH_VARIABLE_PREFIX + JTJNSTranspiler.uniqueID();
-    private final Collection<String> exceptions;
+    private String variableName = CATCH_VARIABLE_PREFIX + JTJNSTranspiler.uniqueID();
+    private final List<String> exceptions;
 
     public JTJCatchBlock(JTJChildrenNode parent, Collection<String> exceptions) {
         super(parent);
         if (exceptions.isEmpty())
             throw new IllegalArgumentException();
 
-        this.exceptions = exceptions;
+        this.exceptions = new ArrayList<>(exceptions);
+    }
+
+    public void setVariableName(String variableName) {
+        this.variableName = variableName;
     }
 
     public String getVariableName() {
@@ -31,9 +40,33 @@ public class JTJCatchBlock extends JTJIfRunnableBlock {
     @Override
     public void appendToStr(StringBuilder builder) {
         builder.append(CATCH_START);
-        builder.append(String.join("|", exceptions)).append(" ").append(this.variableName);
+        builder.append("Throwable").append(" ").append(this.variableName);
         builder.append(CATCH_MIDDLE);
-        super.appendToStr(builder);
+
+        //compiler -> "exception [...] is never thrown in body of corresponding try statement"
+        if (exceptions.size() > 1 ||
+            (!exceptions.get(0).equals("java.lang.Throwable") && !exceptions.get(0).equals("Throwable"))) {
+            JTJIfRunnableBlock wrapper = new JTJIfRunnableBlock(null);
+            JTJIfStatement ifStatement = new JTJIfStatement(this);
+            ifStatement.getCondition().addChild(new JTJString(ifStatement,
+                    //convert all exceptions to big or check -> e.getClass().equals(java.io.IOException.class) || [...]
+                    exceptions.stream().map((e) -> this.variableName + ".getClass().equals(" + e + ".class)").collect(Collectors.joining("||"))
+            ));
+
+            //add catch code if condition is true
+            StringBuilder tmpBuilder = new StringBuilder();
+            super.appendToStr(tmpBuilder);
+            ifStatement.getThenBlock().addChild(new JTJString(null, tmpBuilder.toString()));
+
+            //re-throw otherwise
+            ifStatement.getElseBlock().addChild(new JTJThrow(null, this.variableName));
+
+            wrapper.addChild(ifStatement);
+            wrapper.appendToStr(builder);
+        } else {
+            super.appendToStr(builder);
+        }
+
         builder.append(CATCH_END);
     }
 }

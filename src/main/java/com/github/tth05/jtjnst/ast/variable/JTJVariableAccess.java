@@ -30,6 +30,11 @@ public class JTJVariableAccess extends JTJNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
+        if (this.variable.getScope().getScopeType() == VariableStack.ScopeType.CATCH) {
+            builder.append(this.variable.getOldName());
+            return;
+        }
+
         String variableType = variable.getType();
         boolean needsCast = !variableType.equals("short") && !variableType.equals("byte");
 

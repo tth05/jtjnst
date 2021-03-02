@@ -8,8 +8,15 @@ import java.util.Map;
 
 public class JTJProgram extends JTJNode {
 
+    public static final int MAIN_METHOD_INDEX = 0;
     public static final int UNSAFE_INDEX = 1;
+    public static final int CALL_METHOD_USING_REFLECTION_METHOD_INDEX = 2;
+
     public static final String ACCESS_UNSAFE_INSTANCE = "((sun.misc.Unsafe)global.get(%d))".formatted(UNSAFE_INDEX);
+    public static final String CALL_REFLECTION_METHOD = JTJMethodCall.METHOD_CALL_START_WITH_RETURN +
+                                                        JTJMethodCall.METHOD_CALL_START.formatted(0) +
+                                                        "%s, %s, new Class[] {%s}, new Object[] {%s}" +
+                                                        JTJMethodCall.METHOD_CALL_END_WITH_RETURN;
 
     private static final String GET_UNSAFE_INSTANCE = """
             java.util.List.<Runnable>of(
@@ -18,7 +25,17 @@ public class JTJProgram extends JTJNode {
                 () -> {try {if(global.put(%d, ((java.lang.reflect.Field)global.get(%d)).get(null)) != null){}} catch (IllegalAccessException e) {}}
             ).forEach(Runnable::run)
             """;
-    private static final String MAIN_METHOD_RUN_STMT = "((BiFunction<List<Object>, Object[], Object[]>)global.get(0)).apply(java.util.List.of(0, __args), new Object[0])";
+
+    // public Object callReflectionMethod(Object target, String methodName, Class[] paramTypes, Object[] params)
+    private static final String CALL_METHOD_USING_REFLECTION_METHOD = """
+            {try {
+                if(local.put(0, args.get(1).getClass().getDeclaredMethod((String) args.get(2), (Class<?>[]) args.get(3))) != null){}
+                if((retPtr[0] = ((java.lang.reflect.Method)local.get(0)).invoke(args.get(1), ((Object[]) args.get(4)))) != null){}
+            } catch (Throwable e) {}}
+            """;
+    private static final String MAIN_METHOD_RUN_STMT = JTJMethodCall.METHOD_CALL_START.formatted(MAIN_METHOD_INDEX) +
+                                                       "__args" + JTJMethodCall.METHOD_CALL_END;
+
     private static final String PROGRAM_START = """
             public class Main {
                 public static void main(String[] __args) {
@@ -82,6 +99,11 @@ public class JTJProgram extends JTJNode {
             }
         }
 
+        JTJMethod reflectionMethod = new JTJMethod(null, null);
+        reflectionMethod.addChild(new JTJString(null, CALL_METHOD_USING_REFLECTION_METHOD));
+        reflectionMethod.setId(CALL_METHOD_USING_REFLECTION_METHOD_INDEX);
+
+        inner.addChild(reflectionMethod);
         inner.addChild(new JTJString(null, GET_UNSAFE_INSTANCE.formatted(UNSAFE_INDEX, UNSAFE_INDEX, UNSAFE_INDEX, UNSAFE_INDEX)));
         inner.addChild(new JTJString(null, MAIN_METHOD_RUN_STMT));
         inner.appendToStr(builder);
