@@ -75,4 +75,31 @@ public class StaticMethodTest extends TempDirTest {
 
         JavaCompilerHelper.runAndExpect(input, tmpDir, "foo5", "bar300");
     }
+
+    @Test
+    public void testReturn() {
+        // language=Java
+        String input = """
+                public class Test {
+                    public static void main(String[] args) {
+                        System.out.println(hi(5, "foo"));
+                        System.out.println(hi2(300, "bar"));
+                    }
+                    
+                    public static String hi(int i, String s) {
+                        return i + s;
+                    }
+                    
+                    public static int hi2(int i, String s) {
+                        if(i > 5)
+                            return 0;
+                    
+                        System.out.println("Don't reach me");
+                        return i + s;
+                    }
+                }
+                """;
+
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "5foo", "0");
+    }
 }

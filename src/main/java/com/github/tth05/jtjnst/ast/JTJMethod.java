@@ -1,10 +1,13 @@
 package com.github.tth05.jtjnst.ast;
 
 import com.github.tth05.jtjnst.JTJNSTranspiler;
+import com.github.tth05.jtjnst.ast.exception.JTJConditionalTryCatchStatement;
+import com.github.tth05.jtjnst.ast.exception.JTJTryCatchStatement;
 import com.github.tth05.jtjnst.ast.structure.JTJBlock;
 import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class JTJMethod extends JTJChildrenNode {
@@ -22,6 +25,8 @@ public class JTJMethod extends JTJChildrenNode {
             """;
 
     private final JTJBlock body = new JTJBlock(this);
+
+    private final List<Integer> returnIds = new ArrayList<>();
 
     private final int id;
     private final String signature;
@@ -43,6 +48,10 @@ public class JTJMethod extends JTJChildrenNode {
         this.body.addChild(node);
     }
 
+    public void addReturnStatementId(int id) {
+        this.returnIds.add(id);
+    }
+
     @Override
     public List<JTJNode> getChildren() {
         return this.body.getChildren();
@@ -51,7 +60,19 @@ public class JTJMethod extends JTJChildrenNode {
     @Override
     public void appendToStr(StringBuilder builder) {
         builder.append(METHOD_START.formatted(this.id, JTJNSTranspiler.uniqueID()));
-        this.body.appendToStr(builder);
+
+        if (!this.returnIds.isEmpty()) {
+            JTJTryCatchStatement tryCatchStatement = new JTJConditionalTryCatchStatement(this, returnIds);
+
+            for (JTJNode child : this.body.getChildren()) {
+                tryCatchStatement.getTryBlock().addChild(child);
+            }
+
+            tryCatchStatement.appendToStr(builder);
+        } else {
+            this.body.appendToStr(builder);
+        }
+
         builder.append(METHOD_END);
     }
 

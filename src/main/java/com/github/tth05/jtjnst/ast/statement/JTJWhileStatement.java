@@ -1,7 +1,8 @@
 package com.github.tth05.jtjnst.ast.statement;
 
-import com.github.tth05.jtjnst.JTJNSTranspiler;
-import com.github.tth05.jtjnst.ast.*;
+import com.github.tth05.jtjnst.ast.JTJString;
+import com.github.tth05.jtjnst.ast.exception.JTJConditionalTryCatchStatement;
+import com.github.tth05.jtjnst.ast.exception.JTJTryCatchStatement;
 import com.github.tth05.jtjnst.ast.structure.*;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class JTJWhileStatement extends JTJLabelNode {
         JTJBlock inner = new JTJBlock(this, false);
 
         if (!continueStatementIds.isEmpty()) {
-            JTJTryCatchStatement tryCatchStatement = generateTryCatchBlockFromIds(continueStatementIds);
+            JTJTryCatchStatement tryCatchStatement = new JTJConditionalTryCatchStatement(null, continueStatementIds);
             for (JTJNode child : this.bodyBlock.getChildren()) {
                 tryCatchStatement.getTryBlock().addChild(child);
             }
@@ -66,40 +67,13 @@ public class JTJWhileStatement extends JTJLabelNode {
         whileBuilder.append(WHILE_END);
 
         if (!breakStatementIds.isEmpty()) {
-            JTJTryCatchStatement tryCatchStatement = generateTryCatchBlockFromIds(breakStatementIds);
+            JTJTryCatchStatement tryCatchStatement = new JTJConditionalTryCatchStatement(null, breakStatementIds);
 
             tryCatchStatement.getTryBlock().addChild(new JTJString(tryCatchStatement, whileBuilder.toString()));
             tryCatchStatement.appendToStr(builder);
         } else {
             builder.append(whileBuilder);
         }
-    }
-
-    private JTJTryCatchStatement generateTryCatchBlockFromIds(List<Integer> ids) {
-        int exId = JTJNSTranspiler.uniqueID();
-
-        JTJTryCatchStatement tryCatchStatement = new JTJTryCatchStatement(this);
-        tryCatchStatement.addException("Throwable", exId);
-
-        JTJIfStatement catchIfStatement = ids.stream().map((id) -> {
-            JTJIfStatement ifStatement = new JTJIfStatement(tryCatchStatement);
-            //add the equals check to only detect the exceptions thrown by break and continue
-            ifStatement.getCondition().addChild(new JTJString(ifStatement.getCondition(),
-                    JTJTryCatchStatement.CATCH_VARIABLE_PREFIX + exId +
-                    ".getMessage().equals(\"" + JTJThrow.THROW_ID_PREFIX + id + "\")"));
-            return ifStatement;
-        }).reduce((if1, if2) -> {
-            if1.getElseBlock().addChild(if2);
-            return if2;
-        }).get();
-
-        catchIfStatement.getElseBlock().addChild(new JTJString(catchIfStatement.getElseBlock(),
-                JTJProgram.ACCESS_UNSAFE_INSTANCE + ".throwException(" +
-                JTJTryCatchStatement.CATCH_VARIABLE_PREFIX + exId + ")"));
-
-        tryCatchStatement.getCatchBlock().addChild(catchIfStatement);
-
-        return tryCatchStatement;
     }
 
     public JTJChildrenNode getCondition() {

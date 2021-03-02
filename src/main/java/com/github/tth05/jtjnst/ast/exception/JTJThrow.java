@@ -1,5 +1,6 @@
-package com.github.tth05.jtjnst.ast;
+package com.github.tth05.jtjnst.ast.exception;
 
+import com.github.tth05.jtjnst.ast.JTJProgram;
 import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
@@ -7,13 +8,18 @@ public class JTJThrow extends JTJNode {
 
     public static final String THROW_ID_PREFIX = "jtjThrow";
 
-    public static final String THROWS = JTJProgram.ACCESS_UNSAFE_INSTANCE + ".throwException(new RuntimeException(\"" + THROW_ID_PREFIX + "%d\"))";
+    private static final String THROWS = JTJProgram.ACCESS_UNSAFE_INSTANCE + ".throwException(%s)";
 
-    private final int id;
+    private final String id;
 
     public JTJThrow(JTJChildrenNode parent, int id) {
         super(parent);
-        this.id = id;
+        this.id = "new RuntimeException(\"" + THROW_ID_PREFIX + id + "\")";
+    }
+
+    public JTJThrow(JTJChildrenNode parent, String exception) {
+        super(parent);
+        this.id = exception;
     }
 
     @Override

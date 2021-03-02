@@ -18,6 +18,7 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
+import com.github.tth05.jtjnst.ast.exception.JTJThrow;
 import com.github.tth05.jtjnst.ast.statement.JTJIfStatement;
 import com.github.tth05.jtjnst.ast.statement.JTJWhileStatement;
 import com.github.tth05.jtjnst.ast.structure.JTJBlock;
@@ -517,13 +518,17 @@ public class JTJNSTranspiler {
 
         @Override
         public void visit(ReturnStmt n, Object arg) {
-            //TODO: return needs to actually return
+            int id = uniqueID();
+
             pushNode(new JTJStatement(currentNode));
 
             currentNode.addChild(new JTJString(currentNode, "retPtr[0] ="));
             n.getExpression().ifPresent(e -> e.accept(this, arg));
 
             popNode();
+
+            currentMethod.addReturnStatementId(id);
+            currentNode.addChild(new JTJThrow(currentNode, id));
         }
 
         @Override
