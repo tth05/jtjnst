@@ -24,12 +24,12 @@ public class ClassesTest extends TempDirTest {
         String input = """
                 public class Test {
                 
-                    public Test() {
-                        System.out.println("Hi");
+                    public Test(String str) {
+                        System.out.println(str);
                     }
                 
                     public static void main(String[] args) {
-                        Test test = new Test();
+                        Test test = new Test("Hi");
                     }
                 }
                 """;
@@ -67,8 +67,16 @@ public class ClassesTest extends TempDirTest {
         String input = """
                 public class Test {
                     
-                    //public static int i = 5;
-                    public int i;
+//                    public static int staticI = 5;
+                    int i = 5;
+                    long l = 5045674734636L;
+                    double d = 50.345645673473d;
+                    float f = 373.12345f;
+                    char c = 't';
+                    boolean b = true;
+                    byte bb = -5;
+                    short s = 4574;
+                    String str = "test";
                 
                     public Test() {
                         System.out.println(i);
@@ -82,12 +90,12 @@ public class ClassesTest extends TempDirTest {
                     public static void main(String[] args) {
                         Test test = new Test();
                         test.sayHi();
-                        System.out.println(test.i);
+                        System.out.println("" + test.i + test.l + test.d + test.f + test.c + test.b + test.bb + test.s + test.str);
                     }
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "0", "Hi", "0", "0");
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "5", "Hi", "5", "5504567473463650.345645673473373.12344ttrue-54574test");
     }
 
     @Test
@@ -98,8 +106,9 @@ public class ClassesTest extends TempDirTest {
                 
                     public int i = 1;
                 
-                    public Test() {
+                    public Test(int j) {
                         i = 5;
+                        this.i = j;
                         System.out.println(++i);
                     }
                     
@@ -110,11 +119,11 @@ public class ClassesTest extends TempDirTest {
                     }
                     
                     public static Test getInstance() {
-                        return new Test();
+                        return new Test(78);
                     }
                     
                     public static void main(String[] args) {
-                        Test test = new Test();
+                        Test test = new Test(123);
                         test.sayHi();
                         System.out.println(++test.i);
                         getInstance().i = 6;
@@ -122,6 +131,6 @@ public class ClassesTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "6", "Hi", "7", "9", "6");
+        JavaCompilerHelper.runAndExpect(input, tmpDir, "124", "Hi", "125", "127", "79");
     }
 }

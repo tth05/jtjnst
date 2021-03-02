@@ -328,8 +328,8 @@ public class JTJNSTranspiler {
                 if (field == null)
                     throw new IllegalStateException();
 
-                //TODO: fields of custom types need a cast to Map instead
-                currentNode.addChild(new JTJString(currentNode, "((%s)".formatted(field.getVariable().getType())));
+                JTJVariableAccess jtjVariableAccess = new JTJVariableAccess(currentNode, field.getVariable(), program);
+                currentNode = new JTJEmpty(currentNode);
 
                 //ignore "this" keyword
                 if (!n.getScope().isThisExpr())
@@ -337,7 +337,10 @@ public class JTJNSTranspiler {
                 else
                     currentNode.addChild(new JTJVariableAccess(currentNode, instanceVar, program));
 
-                currentNode.addChild(new JTJString(currentNode, ".get(%d))".formatted(field.getVariable().getNewName())));
+                jtjVariableAccess.setScope(currentNode.asString());
+                currentNode = currentNode.getParent();
+
+                currentNode.addChild(jtjVariableAccess);
             }
         }
 
