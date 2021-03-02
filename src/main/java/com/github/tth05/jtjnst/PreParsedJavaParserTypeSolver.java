@@ -25,7 +25,7 @@ public class PreParsedJavaParserTypeSolver implements TypeSolver {
     public PreParsedJavaParserTypeSolver(Iterable<CompilationUnit> units) {
         units.forEach(u -> {
             for (TypeDeclaration<?> type : u.getTypes()) {
-                knownTypes.put(type.getNameAsString(), type);
+                knownTypes.put(type.getFullyQualifiedName().orElseThrow(), type);
             }
         });
     }

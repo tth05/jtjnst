@@ -43,17 +43,18 @@ public class JTJCatchBlock extends JTJIfRunnableBlock {
         builder.append("Throwable").append(" ").append(this.variableName);
         builder.append(CATCH_MIDDLE);
 
-        //compiler -> "exception [...] is never thrown in body of corresponding try statement"
-        if (exceptions.size() > 1 ||
-            (!exceptions.get(0).equals("java.lang.Throwable") && !exceptions.get(0).equals("Throwable"))) {
+        if (!this.variableName.startsWith("jtjEx")) {
+            //compiler -> "exception [...] is never thrown in body of corresponding try statement"
             JTJIfRunnableBlock wrapper = new JTJIfRunnableBlock(null);
             JTJIfStatement ifStatement = new JTJIfStatement(this);
             ifStatement.getCondition().addChild(new JTJString(ifStatement,
+                    "!" + this.variableName + ".getMessage().startsWith(\"" + JTJThrow.THROW_ID_PREFIX + "\")&&(" +
                     //convert all exceptions to big or check -> e.getClass().equals(java.io.IOException.class) || [...]
-                    exceptions.stream().map((e) -> this.variableName + ".getClass().equals(" + e + ".class)").collect(Collectors.joining("||"))
+                    exceptions.stream().map((e) -> this.variableName + ".getClass().equals(" + e + ".class)").collect(Collectors.joining("||")) +
+                    ")"
             ));
 
-            //add catch code if condition is true
+            //add catch code when condition is true
             StringBuilder tmpBuilder = new StringBuilder();
             super.appendToStr(tmpBuilder);
             ifStatement.getThenBlock().addChild(new JTJString(null, tmpBuilder.toString()));

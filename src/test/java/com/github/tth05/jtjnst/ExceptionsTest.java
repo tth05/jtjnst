@@ -1,6 +1,5 @@
 package com.github.tth05.jtjnst;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class ExceptionsTest extends TempDirTest {
@@ -34,7 +33,6 @@ public class ExceptionsTest extends TempDirTest {
         JavaCompilerHelper.runAndExpect(input, tmpDir, "SuccessHi", "Success2", "Successnull");
     }
 
-    @Disabled
     @Test
     public void testCallMethodMarkedWithThrows() {
         // language=Java
@@ -44,7 +42,7 @@ public class ExceptionsTest extends TempDirTest {
                         try {
                             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
                             reader.skip(-5);
-                        } catch (IOException e) {
+                        } catch (IllegalArgumentException e) {
                             System.out.println("Success");
                         } 
                     }

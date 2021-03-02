@@ -30,10 +30,10 @@ public class JTJConditionalTryCatchStatement extends JTJTryCatchStatement {
             statementList.get(i - 1).getElseBlock().addChild(statementList.get(i));
         }
 
-        JTJIfStatement catchIfStatement = statementList.get(0);
-        catchIfStatement.getElseBlock().addChild(new JTJThrow(catchIfStatement.getElseBlock(), exId));
+        JTJIfStatement lastIfStatement = statementList.get(statementList.size() - 1);
+        lastIfStatement.getElseBlock().addChild(new JTJThrow(lastIfStatement.getElseBlock(), exId));
 
-        catchBlock.addChild(catchIfStatement);
+        catchBlock.addChild(statementList.get(0));
     }
 
     @Override

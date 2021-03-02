@@ -15,7 +15,6 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserFieldDeclaration;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.tth05.jtjnst.ast.*;
@@ -100,7 +99,7 @@ public class JTJNSTranspiler {
                         NodeList<VariableDeclarator> variables = ((FieldDeclaration) member).getVariables();
                         for (VariableDeclarator variable : variables) {
                             clazz.addField(new VariableStack.Variable(JTJClass.DUMMY_SCOPE, variable.getNameAsString(),
-                                    JTJNSTranspiler.uniqueID(), variable.getTypeAsString()));
+                                    JTJNSTranspiler.uniqueID(), variable.resolve().getType().describe()));
                         }
                     }
                 }
@@ -187,7 +186,7 @@ public class JTJNSTranspiler {
             variableStack.addVariable("this", JTJObjectCreation.TYPE_CAST);
             variableStack.push(VariableStack.ScopeType.PARAM);
             for (Parameter parameter : method.getParameters()) {
-                variableStack.addVariable(parameter.getNameAsString(), parameter.getTypeAsString());
+                variableStack.addVariable(parameter.getNameAsString(), parameter.resolve().getType().describe());
             }
             variableStack.push(VariableStack.ScopeType.LOCAL);
 
@@ -206,34 +205,27 @@ public class JTJNSTranspiler {
         public void visit(ExpressionStmt n, Object arg) {
             pushNode(new JTJStatement(currentNode));
             n.getExpression().accept(this, arg);
-            popNode();
+
+            if (!currentNode.getChildren().isEmpty())
+                currentNode.getParent().addChild(currentNode);
+
+            currentNode = currentNode.getParent();
         }
 
         @Override
         public void visit(MethodCallExpr n, Object arg) {
             ResolvedMethodDeclaration resolvedMethod = n.resolve();
 
-            boolean isStatic = resolvedMethod.isStatic();
-            boolean isJavaParserDeclaration = resolvedMethod instanceof JavaParserMethodDeclaration;
-            boolean switchScope = !isStatic && isJavaParserDeclaration;
+            JTJMethodCall jtjMethodCall = new JTJMethodCall(this.currentNode, program, resolvedMethod);
 
-            //If we call a method on a custom instance, the scope will the first parameter of that method.
-            //  Otherwise it will come first as usual.
-            if (!switchScope) {
-                n.getScope().ifPresent(s -> {
-                    //don't parse the scope for static methods
-                    if (!isStatic)
-                        s.accept(this, arg);
-                });
+            if (!resolvedMethod.isStatic()) {
+                pushNode(jtjMethodCall.getScope());
+                n.getScope().ifPresent(s -> s.accept(this, arg));
+                currentNode = jtjMethodCall.getParent();
             }
 
             //TODO: type arguments
-            pushNode(new JTJMethodCall(this.currentNode, program, resolvedMethod));
-
-            if (switchScope) {
-                //instance methods get the scope as the first param, which should be the instance
-                n.getScope().ifPresent(s -> s.accept(this, arg));
-            }
+            pushNode(jtjMethodCall);
 
             n.getArguments().forEach(p -> {
                 pushNode(new JTJEmpty(currentNode));
@@ -259,6 +251,9 @@ public class JTJNSTranspiler {
         @Override
         public void visit(VariableDeclarator n, Object arg) {
             variableStack.addVariable(n.getNameAsString(), n.getType().resolve().describe());
+
+            if (n.getInitializer().isEmpty())
+                return;
 
             VariableStack.Variable variable = variableStack.findVariable(n.getNameAsString());
             pushNode(new JTJVariableDeclaration(
@@ -363,7 +358,7 @@ public class JTJNSTranspiler {
                         () -> {
                             currentNode.addChild(new JTJString(currentNode,
                                     switch (variable.getTypeAsString()) {
-                                        case "byte", "short", "int", "char", "float", "double", "long" -> "0";
+                                        case "byte", "short", "int", "char", "float", "double", "long" -> "(" + variable.getTypeAsString() + ")0";
                                         case "boolean" -> "false";
                                         default -> "null";
                                     }
@@ -523,12 +518,14 @@ public class JTJNSTranspiler {
         public void visit(ReturnStmt n, Object arg) {
             int id = uniqueID();
 
-            pushNode(new JTJStatement(currentNode));
+            n.getExpression().ifPresent(e -> {
+                pushNode(new JTJStatement(currentNode));
 
-            currentNode.addChild(new JTJString(currentNode, "retPtr[0] ="));
-            n.getExpression().ifPresent(e -> e.accept(this, arg));
+                currentNode.addChild(new JTJString(currentNode, "retPtr[0] ="));
+                e.accept(this, arg);
 
-            popNode();
+                popNode();
+            });
 
             currentMethod.addReturnStatementId(id);
             currentNode.addChild(new JTJThrow(currentNode, id));
@@ -585,8 +582,13 @@ public class JTJNSTranspiler {
         }
 
         @Override
-        public void visit(ThisExpr n, Object arg) {
-            currentNode.addChild(new JTJString(currentNode, "this"));
+        public void visit(LambdaExpr n, Object arg) {
+            if (n.getBody() instanceof BlockStmt)
+                throw new UnsupportedOperationException();
+
+            //TODO:
+//            currentNode.addChild(new JTJString(currentNode, "() -> "));
+            n.getBody().accept(this, arg);
         }
 
         @Override
@@ -629,6 +631,15 @@ public class JTJNSTranspiler {
             currentNode.addChild(new JTJString(currentNode, "("));
             n.getInner().accept(this, arg);
             currentNode.addChild(new JTJString(currentNode, ")"));
+        }
+
+        @Override
+        public void visit(ThisExpr n, Object arg) {
+            VariableStack.Variable instanceVar = variableStack.findVariable("this");
+            if (instanceVar == null)
+                throw new IllegalStateException();
+
+            currentNode.addChild(new JTJVariableAccess(currentNode, instanceVar, program));
         }
 
         @Override
@@ -683,6 +694,7 @@ public class JTJNSTranspiler {
 
             return jtjField.getVariable();
         }
+
 
         private void pushNode(JTJChildrenNode node) {
             currentNode = node;
