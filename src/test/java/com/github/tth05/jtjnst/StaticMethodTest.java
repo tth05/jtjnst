@@ -19,7 +19,7 @@ public class StaticMethodTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi");
     }
 
     @Test
@@ -33,7 +33,7 @@ public class StaticMethodTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "[]");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "[]");
     }
 
     @Test
@@ -54,7 +54,7 @@ public class StaticMethodTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(new String[]{input1, input2}, tmpDir, "Hi");
+        TestJavaCompilerHelper.runAndExpect(new String[]{input1, input2}, tmpDir, "Hi");
     }
 
     @Test
@@ -73,7 +73,7 @@ public class StaticMethodTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "foo5", "bar300");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "foo5", "bar300");
     }
 
     @Test
@@ -100,6 +100,6 @@ public class StaticMethodTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "5foo", "0");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5foo", "0");
     }
 }

@@ -22,7 +22,7 @@ public class IfStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi2");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi2");
     }
 
     @Test
@@ -48,7 +48,7 @@ public class IfStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi2", "Hi6");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi2", "Hi6");
     }
 
     @Test
@@ -63,6 +63,6 @@ public class IfStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi1", "2");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi1", "2");
     }
 }

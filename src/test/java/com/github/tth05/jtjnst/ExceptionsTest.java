@@ -30,7 +30,7 @@ public class ExceptionsTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "SuccessHi", "Success2", "Successnull");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "SuccessHi", "Success2", "Successnull");
     }
 
     @Test
@@ -49,6 +49,6 @@ public class ExceptionsTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Success");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Success");
     }
 }

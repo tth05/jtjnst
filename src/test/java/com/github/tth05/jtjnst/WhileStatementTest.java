@@ -22,7 +22,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi");
     }
 
     @Test
@@ -43,7 +43,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi", "Hi2");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi", "Hi2");
     }
 
     @Test
@@ -67,7 +67,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "5");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5");
     }
 
     @Test
@@ -89,7 +89,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "1");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "1");
     }
 
     @Test
@@ -114,7 +114,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "2");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "2");
     }
 
     @Test
@@ -138,7 +138,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "3");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "3");
     }
 
     @Test
@@ -154,7 +154,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi");
     }
 
     @Test
@@ -177,7 +177,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi", "Hi2", "1");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi", "Hi", "Hi", "Hi", "Hi2", "1");
     }
 
     @Test
@@ -200,7 +200,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "5");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5");
     }
 
     @Test
@@ -221,7 +221,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "1");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "1");
     }
 
     @Test
@@ -245,7 +245,7 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "2");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "2");
     }
 
     @Test
@@ -267,6 +267,6 @@ public class WhileStatementTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "3");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "3");
     }
 }

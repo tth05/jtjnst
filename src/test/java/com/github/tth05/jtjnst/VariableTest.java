@@ -16,7 +16,7 @@ public class VariableTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "5");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5");
     }
 
     @Test
@@ -39,7 +39,7 @@ public class VariableTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "5504567473463650.345645673473373.12344ttrue-54574test");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5504567473463650.345645673473373.12344ttrue-54574test");
     }
 
     @Test
@@ -55,7 +55,7 @@ public class VariableTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "5", "6");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5", "6");
     }
 
     @Test
@@ -71,7 +71,7 @@ public class VariableTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "25");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "25");
     }
 
     @Test
@@ -92,7 +92,7 @@ public class VariableTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "4", "5", "5", "6");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "4", "5", "5", "6");
     }
 
     @Test
@@ -111,6 +111,6 @@ public class VariableTest extends TempDirTest {
                 }
                 """;
 
-        JavaCompilerHelper.runAndExpect(input, tmpDir, "6", "true", "25", "0");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "6", "true", "25", "0");
     }
 }
