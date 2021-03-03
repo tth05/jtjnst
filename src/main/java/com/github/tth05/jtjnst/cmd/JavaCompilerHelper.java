@@ -64,7 +64,6 @@ public class JavaCompilerHelper {
                     .directory(tmpDir.toFile())
                     .start();
             PROCESSES.add(process);
-            System.out.println(process.pid());
 
             InputStream processIn = process.getInputStream();
             OutputStream processOut = process.getOutputStream();
