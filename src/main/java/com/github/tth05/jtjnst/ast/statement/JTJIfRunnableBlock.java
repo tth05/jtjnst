@@ -6,7 +6,7 @@ import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 public class JTJIfRunnableBlock extends JTJBlock {
 
     public static final String RUNNABLE_IF_START = "{if(true ? ";
-    public static final String RUNNABLE_IF_END = ".stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {}}";
+    public static final String RUNNABLE_IF_END = ".stream().peek(Runnable::run).allMatch(java.util.Objects::nonNull) : false) {}}";
 
     public JTJIfRunnableBlock(JTJChildrenNode parent) {
         super(parent, false);

@@ -26,46 +26,46 @@ public class JTJProgram extends JTJNode {
                                                         JTJMethodCall.METHOD_CALL_END_WITH_RETURN + ").orElseThrow()";
 
     private static final String GET_UNSAFE_INSTANCE = """
-            java.util.List.<Runnable>of(
-                () -> {try {if (global.put(%d, sun.misc.Unsafe.class.getDeclaredField("theUnsafe")) != null) {}} catch (NoSuchFieldException e) {}},
-                () -> ((java.lang.reflect.Field) global.get(%d)).setAccessible(true),
-                () -> {try {if(global.put(%d, ((java.lang.reflect.Field)global.get(%d)).get(null)) != null){}} catch (IllegalAccessException e) {}}
-            ).forEach(Runnable::run)
+            java.util.List.<Runnable>of( \
+                () -> {try {if (global.put(%d, sun.misc.Unsafe.class.getDeclaredField("theUnsafe")) != null) {}} catch (NoSuchFieldException e) {}}, \
+                () -> ((java.lang.reflect.Field) global.get(%d)).setAccessible(true), \
+                () -> {try {if(global.put(%d, ((java.lang.reflect.Field)global.get(%d)).get(null)) != null){}} catch (IllegalAccessException e) {}} \
+            ).forEach(Runnable::run) \
             """;
 
     // public Object callReflectionMethod(Object target, String methodName, Class clazz, Class[] paramTypes, Object[] params)
     private static final String CALL_METHOD_USING_REFLECTION_METHOD = """
-            {try {
-                if(local.put(0, ((Class)args.get(3)).getDeclaredMethod((String) args.get(2), (Class<?>[]) args.get(4))) != null){}
-                if((retPtr[0] = ((java.lang.reflect.Method)local.get(0)).invoke(args.get(1).getClass() == int.class ? null : args.get(1), ((Object[]) args.get(5)))) != null){}
-            } catch (Throwable e) {
-                if(java.util.stream.Stream.of(false).peek((I_LOVE_JTJNST) -> %s).findFirst().get()){}
-            }}
+            {try { \
+                if(local.put(0, ((Class)args.get(3)).getDeclaredMethod((String) args.get(2), (Class<?>[]) args.get(4))) != null){} \
+                if((retPtr[0] = ((java.lang.reflect.Method)local.get(0)).invoke(args.get(1).getClass() == int.class ? null : args.get(1), ((Object[]) args.get(5)))) != null){} \
+            } catch (Throwable e) { \
+                if(java.util.stream.Stream.of(false).peek((I_LOVE_JTJNST) -> %s).findFirst().get()){} \
+            }} \
             """.formatted(ACCESS_UNSAFE_INSTANCE + ".throwException(e.getCause())");
 
     // public Object callReflectionConstructor(Class clazz, Class[] paramTypes, Object[] params)
     private static final String CALL_CONSTRUCTOR_USING_REFLECTION_METHOD = """
-            {try {
-                if(local.put(0, ((Class)args.get(1)).getDeclaredConstructor((Class<?>[]) args.get(2))) != null){}
-                if((retPtr[0] = ((java.lang.reflect.Constructor)local.get(0)).newInstance(((Object[]) args.get(3)))) != null){}
-            } catch (Throwable e) {
-                if(java.util.stream.Stream.of(false).peek((I_LOVE_JTJNST) -> %s).findFirst().get()){}
-            }}
+            {try { \
+                if(local.put(0, ((Class)args.get(1)).getDeclaredConstructor((Class<?>[]) args.get(2))) != null){} \
+                if((retPtr[0] = ((java.lang.reflect.Constructor)local.get(0)).newInstance(((Object[]) args.get(3)))) != null){} \
+            } catch (Throwable e) { \
+                if(java.util.stream.Stream.of(false).peek((I_LOVE_JTJNST) -> %s).findFirst().get()){} \
+            }} \
             """.formatted(ACCESS_UNSAFE_INSTANCE + ".throwException(e.getCause())");
 
     private static final String MAIN_METHOD_RUN_STMT = JTJMethodCall.METHOD_CALL_START.formatted(MAIN_METHOD_INDEX) +
                                                        "0, __args" + JTJMethodCall.METHOD_CALL_END;
 
     private static final String PROGRAM_START = """
-            public class Main {
-                public static void main(String[] __args) {
-                    if(((Function<HashMap<Integer, Object>, Boolean>)((global)->Stream.<Runnable>of(() ->
+            public class Main { \
+                public static void main(String[] __args) { \
+                    if(((java.util.function.Function<java.util.HashMap<Integer, Object>, Boolean>)((global)->java.util.stream.Stream.<Runnable>of(() -> \
             """;
 
     private static final String PROGRAM_END = """
-                        ).peek(Runnable::run).findFirst() == null)).apply(new HashMap<>())) {}
-                    }
-                }
+                        ).peek(Runnable::run).findFirst() == null)).apply(new java.util.HashMap<>())) {} \
+                    } \
+                } \
             """;
 
     private final Map<String, JTJClass> classMap = new HashMap<>();

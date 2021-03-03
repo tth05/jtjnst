@@ -13,15 +13,15 @@ import java.util.List;
 public class JTJMethod extends JTJChildrenNode {
 
     public static final String METHOD_START = """
-            global.put(%d, (BiFunction<List<Object>, Object[], Object[]>)(
-                (args, retPtr)->
-                    (Object[]) Stream.of((Object)retPtr).peek((jtjLambda%d) -> ((Consumer<HashMap<Integer, Object>>) (local ->
+            global.put(%d, (java.util.function.BiFunction<java.util.List<Object>, Object[], Object[]>)( \
+                (args, retPtr)-> \
+                    (Object[]) java.util.stream.Stream.of((Object)retPtr).peek((jtjLambda%d) -> ((java.util.function.Consumer<java.util.HashMap<Integer, Object>>) (local -> \
             """;
 
     public static final String METHOD_END = """
-                    )).accept(new HashMap<>())).findFirst().get()
-                )
-            )
+                    )).accept(new java.util.HashMap<>())).findFirst().get() \
+                ) \
+            ) \
             """;
 
     private final JTJBlock body = new JTJBlock(this);

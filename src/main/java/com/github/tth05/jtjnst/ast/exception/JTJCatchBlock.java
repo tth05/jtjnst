@@ -48,7 +48,8 @@ public class JTJCatchBlock extends JTJIfRunnableBlock {
             JTJIfRunnableBlock wrapper = new JTJIfRunnableBlock(null);
             JTJIfStatement ifStatement = new JTJIfStatement(this);
             ifStatement.getCondition().addChild(new JTJString(ifStatement,
-                    "!" + this.variableName + ".getMessage().startsWith(\"" + JTJThrow.THROW_ID_PREFIX + "\")&&(" +
+                    "!java.util.Optional.ofNullable(" + this.variableName + ".getMessage()).orElse(\"\")" +
+                    ".startsWith(\"" + JTJThrow.THROW_ID_PREFIX + "\")&&(" +
                     //convert all exceptions to big or check -> e.getClass().equals(java.io.IOException.class) || [...]
                     exceptions.stream().map((e) -> this.variableName + ".getClass().equals(" + e + ".class)").collect(Collectors.joining("||")) +
                     ")"

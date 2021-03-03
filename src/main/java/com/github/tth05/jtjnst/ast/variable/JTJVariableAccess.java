@@ -6,12 +6,16 @@ import com.github.tth05.jtjnst.ast.JTJProgram;
 import com.github.tth05.jtjnst.ast.structure.JTJChildrenNode;
 import com.github.tth05.jtjnst.ast.structure.JTJNode;
 
+import java.util.Set;
+
 public class JTJVariableAccess extends JTJNode {
 
     public static final String VARIABLE_ACCESS_START = "((";
     public static final String VARIABLE_ACCESS_MIDDLE_1 = ")";
     public static final String VARIABLE_ACCESS_MIDDLE_2 = ".get(";
     public static final String VARIABLE_ACCESS_END = "))";
+
+    private static final Set<String> REQUIRE_PARSE_TYPES = Set.of("byte", "short", "long");
 
     private final VariableStack.Variable variable;
     private final JTJProgram program;
@@ -36,7 +40,7 @@ public class JTJVariableAccess extends JTJNode {
         }
 
         String variableType = variable.getType();
-        boolean needsCast = !variableType.equals("short") && !variableType.equals("byte");
+        boolean needsCast = !REQUIRE_PARSE_TYPES.contains(variableType);
 
         if (this.program.findClass(variableType) != null)
             variableType = JTJObjectCreation.TYPE_CAST;

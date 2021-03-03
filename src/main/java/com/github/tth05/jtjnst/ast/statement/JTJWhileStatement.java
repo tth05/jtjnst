@@ -11,9 +11,8 @@ import java.util.List;
 public class JTJWhileStatement extends JTJLabelNode {
 
     public static final String WHILE_START = "{while(";
-    //TODO: add random id to lambda variable name
     public static final String WHILE_MIDDLE = "?";
-    public static final String WHILE_END = ".stream().peek(Runnable::run).allMatch(Objects::nonNull) : false) {}}";
+    public static final String WHILE_END = ".stream().peek(Runnable::run).allMatch(java.util.Objects::nonNull) : false) {}}";
 
     private final JTJChildrenNode condition = new JTJEmpty(this);
     private final JTJBlock bodyBlock = new JTJBlock(this, true);

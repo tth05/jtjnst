@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 public class JTJMethodCall extends JTJChildrenNode {
 
     public static final String METHOD_CALL_START_WITH_RETURN = "((%s)";
-    public static final String METHOD_CALL_START = "((BiFunction<List<Object>, Object[], Object[]>)global.get(%d)).apply(java.util.List.of(";
+    public static final String METHOD_CALL_START = "((java.util.function.BiFunction<java.util.List<Object>, Object[], Object[]>)global.get(%d)).apply(java.util.List.of(";
     public static final String METHOD_CALL_END = "), new Object[0])";
     public static final String METHOD_CALL_END_WITH_RETURN = "), new Object[1])[0])";
 

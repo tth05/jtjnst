@@ -51,7 +51,7 @@ public class JTJObjectCreation extends JTJChildrenNode {
                     .append(JTJMethodCall.METHOD_CALL_START.formatted(jtjClass.getInitMethod().getId()))
                     .append("new java.util.HashMap<Integer,String>()")
                     .append(JTJMethodCall.METHOD_CALL_END_WITH_RETURN)
-                    .append(",");
+                    .append(!this.getChildren().isEmpty() ? "," : "");
 
             appendChildrenToBuilderWithSeparator(builder, ",");
             builder.append(JTJMethodCall.METHOD_CALL_END_WITH_RETURN);
