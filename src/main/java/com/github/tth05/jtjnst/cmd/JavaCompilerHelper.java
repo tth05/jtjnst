@@ -90,8 +90,8 @@ public class JavaCompilerHelper {
 
     public static void killAll() {
         for (Process process : PROCESSES) {
-            process.descendants().forEach(ProcessHandle::destroyForcibly);
-            process.destroyForcibly();
+            process.descendants().forEach(ProcessHandle::destroy);
+            process.destroy();
         }
     }
 

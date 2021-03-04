@@ -74,7 +74,11 @@ public class CommandLineInterface implements Runnable {
 
         JTJNSTranspiler transpiler = new JTJNSTranspiler(logger, files.toArray(new String[0]));
         try {
-            Files.writeString(outputFile, transpiler.getTranspiledCode(), StandardCharsets.UTF_8);
+            String transpiledCode = transpiler.getTranspiledCode();
+            if (format)
+                transpiledCode = JTJNSTFormatter.format(transpiledCode);
+
+            Files.writeString(outputFile, transpiledCode, StandardCharsets.UTF_8);
         } catch (IOException e) {
             System.err.println("Unable to write to output file: " + e.getMessage());
         }
