@@ -40,9 +40,4 @@ public class JTJConditionalTryCatchStatement extends JTJTryCatchStatement {
     public JTJCatchBlock addCatchBlock(String... exceptions) {
         throw new UnsupportedOperationException();
     }
-
-    @Override
-    public void appendToStr(StringBuilder builder) {
-        super.appendToStr(builder);
-    }
 }
