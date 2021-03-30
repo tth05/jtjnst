@@ -84,6 +84,7 @@ public class StaticMethodTest extends TempDirTest {
                     public static void main(String[] args) {
                         System.out.println(hi(5, "foo"));
                         System.out.println(hi2(300, "bar"));
+                        returnVoid();
                     }
                     
                     public static String hi(int i, String s) {
@@ -97,9 +98,15 @@ public class StaticMethodTest extends TempDirTest {
                         System.out.println("Don't reach me");
                         return i + s;
                     }
+                    
+                    public static void returnVoid() {
+                        System.out.println("Void1");
+                        return;
+                        System.out.println("Void2");
+                    }
                 }
                 """;
 
-        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5foo", "0");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "5foo", "0", "Void1");
     }
 }
