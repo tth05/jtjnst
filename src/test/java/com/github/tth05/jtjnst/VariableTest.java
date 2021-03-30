@@ -88,11 +88,20 @@ public class VariableTest extends TempDirTest {
                         System.out.println(++i);
                         System.out.println(i++);
                         System.out.println(i);
+                        System.out.println(--i);
+                        
+                        i = -i;
+                        System.out.println(i);
+                        
+                        boolean val = true;
+                        System.out.println(!(!(!val)));
+                        i = 2;
+                        System.out.println(~i);
                     }
                 }
                 """;
 
-        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "4", "5", "5", "6");
+        TestJavaCompilerHelper.runAndExpect(input, tmpDir, "4", "5", "5", "6", "5", "-5", "false", "-3");
     }
 
     @Test

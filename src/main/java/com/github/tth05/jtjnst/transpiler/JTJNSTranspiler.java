@@ -417,14 +417,17 @@ public class JTJNSTranspiler {
         @Override
         public void visit(UnaryExpr n, Object arg) {
             String operator = n.getOperator().asString();
-            //i++ -> i + 1
-            operator = operator.length() > 1 ? operator.substring(1) + "1" : operator;
 
-            if (n.getExpression() instanceof NodeWithSimpleName<?>) {
+            //if the expression accesses a variable and we're using ++ or -- then we actually have to modify the
+            // variable
+            if (n.getExpression() instanceof NodeWithSimpleName<?> && n.getOperator().asString().length() == 2) {
                 String variableName = ((NodeWithSimpleName<?>) n.getExpression()).getNameAsString();
                 VariableStack.Variable variable = n.getExpression().isFieldAccessExpr() ?
                         findVariableFromFieldAccess((FieldAccessExpr) n.getExpression()) :
                         variableStack.findVariable(variableName);
+
+                //i++ -> i + 1
+                operator = operator.length() > 1 ? operator.substring(1) + "1" : operator;
 
                 JTJVariableAssign jtjVariableAssign = new JTJVariableAssign(currentNode, variable, n.isPostfix());
                 JTJVariableAccess jtjVariableAccess = new JTJVariableAccess(currentNode, variable, program);
