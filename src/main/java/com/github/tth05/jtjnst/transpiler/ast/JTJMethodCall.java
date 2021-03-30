@@ -6,6 +6,7 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.tth05.jtjnst.transpiler.VariableStack;
 import com.github.tth05.jtjnst.transpiler.ast.structure.JTJChildrenNode;
 import com.github.tth05.jtjnst.transpiler.ast.structure.JTJEmpty;
+import com.github.tth05.jtjnst.transpiler.ast.structure.JTJStatement;
 import com.github.tth05.jtjnst.transpiler.util.ASTUtils;
 
 import java.util.stream.Collectors;
@@ -46,8 +47,8 @@ public class JTJMethodCall extends JTJChildrenNode {
             if (jtjMethod == null)
                 throw new IllegalStateException("Member with signature " + ASTUtils.generateSignatureForMethod(methodDeclaration) + " not found");
 
-            //add cast to start if method has return type
-            if (returnType != null)
+            //add cast to start if method has return type and the return type is not ignored
+            if (returnType != null && !(this.getParent() instanceof JTJStatement && this.getParent().getChildren().size() == 1))
                 builder.append(METHOD_CALL_START_WITH_RETURN.formatted(returnType));
 
             builder.append(METHOD_CALL_START.formatted(jtjMethod.getId()));
@@ -68,8 +69,8 @@ public class JTJMethodCall extends JTJChildrenNode {
 
             appendChildrenToBuilderWithSeparator(builder, ",");
 
-            //get return value from returned list
-            if (returnType != null)
+            //get return value from returned list if the return value is not ignored
+            if (returnType != null && !(this.getParent() instanceof JTJStatement && this.getParent().getChildren().size() == 1))
                 builder.append(METHOD_CALL_END_WITH_RETURN);
             else
                 builder.append(METHOD_CALL_END);
