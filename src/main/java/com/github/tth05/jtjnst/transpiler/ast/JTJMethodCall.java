@@ -49,9 +49,9 @@ public class JTJMethodCall extends JTJChildrenNode {
 
             //add cast to start if method has return type and the return type is not ignored
             if (returnType != null && !(this.getParent() instanceof JTJStatement && this.getParent().getChildren().size() == 1))
-                builder.append(METHOD_CALL_START_WITH_RETURN.formatted(returnType));
+                builder.append(String.format(METHOD_CALL_START_WITH_RETURN, returnType));
 
-            builder.append(METHOD_CALL_START.formatted(jtjMethod.getId()));
+            builder.append(String.format(METHOD_CALL_START, jtjMethod.getId()));
 
             //add dummy argument for static methods
             if (methodDeclaration.isStatic()) {
@@ -60,7 +60,7 @@ public class JTJMethodCall extends JTJChildrenNode {
                 if (!scope.getChildren().isEmpty()) {
                     scope.appendToStr(builder);
                 } else {
-                    builder.append(VariableStack.ScopeType.INSTANCE_FIELDS.getMapName().formatted(JTJObjectCreation.TYPE_CAST));
+                    builder.append(String.format(VariableStack.ScopeType.INSTANCE_FIELDS.getMapName(), JTJObjectCreation.TYPE_CAST));
                 }
 
                 if (!this.getChildren().isEmpty())
@@ -91,7 +91,7 @@ public class JTJMethodCall extends JTJChildrenNode {
             String scopeStr = scope.asString();
 
             //invoke the given method using reflection to avoid catching checked exceptions
-            builder.append(JTJProgram.CALL_REFLECTION_METHOD.formatted(
+            builder.append(String.format(JTJProgram.CALL_REFLECTION_METHOD,
                     //return type cast
                     declaration.getReturnType().describe().replace("void", "Object"),
                     //instance
@@ -105,7 +105,7 @@ public class JTJMethodCall extends JTJChildrenNode {
                             .mapToObj(i -> declaration.getParam(i).describeType() + ".class")
                             .collect(Collectors.joining(",")),
                     //parameters
-                    paramBuilder.toString()
+                    paramBuilder
             ));
         }
     }

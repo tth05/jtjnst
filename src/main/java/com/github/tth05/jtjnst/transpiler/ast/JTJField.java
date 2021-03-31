@@ -21,7 +21,7 @@ public class JTJField extends JTJChildrenNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(FIELD_START.formatted(JTJObjectCreation.TYPE_CAST, variable.getNewName()));
+        builder.append(String.format(FIELD_START, JTJObjectCreation.TYPE_CAST, variable.getNewName()));
         appendChildrenToBuilder(builder);
         builder.append(FIELD_END);
     }

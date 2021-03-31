@@ -18,7 +18,7 @@ public class JTJVariableDeclaration extends JTJChildrenNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(DECLARATION_START.formatted(mapName, newName));
+        builder.append(String.format(DECLARATION_START, mapName, newName));
         appendChildrenToBuilder(builder);
         builder.append(DECLARATION_END);
     }

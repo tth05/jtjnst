@@ -7,20 +7,18 @@ public class IfStatementTest extends TempDirTest {
     @Test
     public void testIf() {
         // language=Java
-        String input = """
-                public class Test {
-                    public static void main(String[] args) {
-                        if(true)
-                            System.out.println("Hi");
-                            
-                        if(true)
-                            if(true)
-                                System.out.println("Hi2");
-                        if(false)
-                            System.out.println("Hi3");
-                    }
-                }
-                """;
+        String input = "public class Test {\n" +
+                       "    public static void main(String[] args) {\n" +
+                       "        if(true)\n" +
+                       "            System.out.println(\"Hi\");\n" +
+                       "\n" +
+                       "        if(true)\n" +
+                       "            if(true)\n" +
+                       "                System.out.println(\"Hi2\");\n" +
+                       "        if(false)\n" +
+                       "            System.out.println(\"Hi3\");\n" +
+                       "    }\n" +
+                       "}\n";
 
         TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi", "Hi2");
     }
@@ -28,25 +26,23 @@ public class IfStatementTest extends TempDirTest {
     @Test
     public void testIfElseElse() {
         // language=Java
-        String input = """
-                public class Test {
-                    public static void main(String[] args) {
-                        if(false)
-                            System.out.println("Hi");
-                        else if(true)
-                            System.out.println("Hi2");
-                        else
-                            System.out.println("Hi3");
-                            
-                        if(false)
-                            System.out.println("Hi4");
-                        else if(false)
-                            System.out.println("Hi5");
-                        else
-                            System.out.println("Hi6");
-                    }
-                }
-                """;
+        String input = "public class Test {\n" +
+                       "    public static void main(String[] args) {\n" +
+                       "        if(false)\n" +
+                       "            System.out.println(\"Hi\");\n" +
+                       "        else if(true)\n" +
+                       "            System.out.println(\"Hi2\");\n" +
+                       "        else\n" +
+                       "            System.out.println(\"Hi3\");\n" +
+                       "\n" +
+                       "        if(false)\n" +
+                       "            System.out.println(\"Hi4\");\n" +
+                       "        else if(false)\n" +
+                       "            System.out.println(\"Hi5\");\n" +
+                       "        else\n" +
+                       "            System.out.println(\"Hi6\");\n" +
+                       "    }\n" +
+                       "}\n";
 
         TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi2", "Hi6");
     }
@@ -54,14 +50,12 @@ public class IfStatementTest extends TempDirTest {
     @Test
     public void testTernaryOperator() {
         // language=Java
-        String input = """
-                public class Test {
-                    public static void main(String[] args) {
-                        System.out.println(args.length == 0 ? "Hi" + 1 : 2);
-                        System.out.println(args.length != 0 ? "Hi" + 1 : 2);
-                    }
-                }
-                """;
+        String input = "public class Test {\n" +
+                       "    public static void main(String[] args) {\n" +
+                       "        System.out.println(args.length == 0 ? \"Hi\" + 1 : 2);\n" +
+                       "        System.out.println(args.length != 0 ? \"Hi\" + 1 : 2);\n" +
+                       "    }\n" +
+                       "}\n";
 
         TestJavaCompilerHelper.runAndExpect(input, tmpDir, "Hi1", "2");
     }

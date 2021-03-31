@@ -88,17 +88,36 @@ public class ASTUtils {
         if (typeStr == null)
             throw new IllegalStateException();
 
-        String result = switch (typeStr) {
-            case "boolean" -> "Z";
-            case "byte" -> "B";
-            case "short" -> "S";
-            case "char" -> "C";
-            case "int" -> "I";
-            case "long" -> "J";
-            case "float" -> "F";
-            case "double" -> "D";
-            default -> "L" + typeStr + ";";
-        };
+        String result;
+        switch (typeStr) {
+            case "boolean":
+                result = "Z";
+                break;
+            case "byte":
+                result = "B";
+                break;
+            case "short":
+                result = "S";
+                break;
+            case "char":
+                result = "C";
+                break;
+            case "int":
+                result = "I";
+                break;
+            case "long":
+                result = "J";
+                break;
+            case "float":
+                result = "F";
+                break;
+            case "double":
+                result = "D";
+                break;
+            default:
+                result = "L" + typeStr + ";";
+                break;
+        }
 
         return (isArray ? "[" : "") + result;
     }

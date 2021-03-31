@@ -33,13 +33,13 @@ public class JTJVariableAssign extends JTJChildrenNode {
     @Override
     public void appendToStr(StringBuilder builder) {
         builder.append(this.scope);
-        builder.append(ASSIGN_MIDDLE.formatted(usePut ? "put" : "compute"));
+        builder.append(String.format(ASSIGN_MIDDLE, usePut ? "put" : "compute"));
         builder.append(variable.getNewName());
 
         if (usePut)
             builder.append(ASSIGN_MIDDLE_2_PUT);
         else
-            builder.append(ASSIGN_MIDDLE_2.formatted(JTJNSTranspiler.uniqueID(), JTJNSTranspiler.uniqueID()));
+            builder.append(String.format(ASSIGN_MIDDLE_2, JTJNSTranspiler.uniqueID(), JTJNSTranspiler.uniqueID()));
 
         appendChildrenToBuilder(builder);
         builder.append(ASSIGN_MIDDLE_END);

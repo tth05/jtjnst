@@ -24,6 +24,6 @@ public class JTJThrow extends JTJNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(THROWS.formatted(id));
+        builder.append(String.format(THROWS, id));
     }
 }

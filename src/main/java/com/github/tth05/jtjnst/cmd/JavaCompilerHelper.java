@@ -39,7 +39,7 @@ public class JavaCompilerHelper {
             ByteArrayOutputStream errStream = new ByteArrayOutputStream();
             PrintWriter errWriter = new PrintWriter(errStream);
             boolean result = compiler.getTask(errWriter, fileManager, null,
-                    List.of("--release", "15", "-nowarn"), null, javaFileObjects).call();
+                    List.of("--release", "11", "-nowarn"), null, javaFileObjects).call();
 
             if (!result)
                 System.err.write(errStream.toByteArray());

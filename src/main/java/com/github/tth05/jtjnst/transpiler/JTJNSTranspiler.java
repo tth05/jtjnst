@@ -390,13 +390,26 @@ public class JTJNSTranspiler {
                 variable.getInitializer().ifPresentOrElse(
                         l -> l.accept(this, arg),
                         () -> {
-                            currentNode.addChild(new JTJString(currentNode,
-                                    switch (variable.getTypeAsString()) {
-                                        case "byte", "short", "int", "char", "float", "double", "long" -> "(" + variable.getTypeAsString() + ")0";
-                                        case "boolean" -> "false";
-                                        default -> "null";
-                                    }
-                            ));
+                            String defaultValue;
+                            switch (variable.getTypeAsString()) {
+                                case "byte":
+                                case "short":
+                                case "int":
+                                case "char":
+                                case "float":
+                                case "double":
+                                case "long":
+                                    defaultValue = "(" + variable.getTypeAsString() + ")0";
+                                    break;
+                                case "boolean":
+                                    defaultValue = "false";
+                                    break;
+                                default:
+                                    defaultValue = "null";
+                                    break;
+                            }
+
+                            currentNode.addChild(new JTJString(currentNode, defaultValue));
                         }
                 );
                 popNode();

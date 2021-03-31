@@ -85,7 +85,7 @@ public class JTJClass {
             //return instance
             newBody.addChild(new JTJString(null, "retPtr[0] = args.get(0)"));
 
-            builder.append(METHOD_START.formatted(this.getId(), JTJNSTranspiler.uniqueID()));
+            builder.append(String.format(METHOD_START, this.getId(), JTJNSTranspiler.uniqueID()));
             newBody.appendToStr(builder);
             builder.append(METHOD_END);
         }

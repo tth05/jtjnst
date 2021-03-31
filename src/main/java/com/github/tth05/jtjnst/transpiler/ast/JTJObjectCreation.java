@@ -43,12 +43,12 @@ public class JTJObjectCreation extends JTJChildrenNode {
                 throw new IllegalStateException();
 
 
-            builder.append(JTJMethodCall.METHOD_CALL_START_WITH_RETURN.formatted(TYPE_CAST));
-            builder.append(JTJMethodCall.METHOD_CALL_START.formatted(jtjMethod.getId()));
+            builder.append(String.format(JTJMethodCall.METHOD_CALL_START_WITH_RETURN, TYPE_CAST));
+            builder.append(String.format(JTJMethodCall.METHOD_CALL_START, jtjMethod.getId()));
 
             //add init method call as first argument
-            builder.append(JTJMethodCall.METHOD_CALL_START_WITH_RETURN.formatted("Object"))
-                    .append(JTJMethodCall.METHOD_CALL_START.formatted(jtjClass.getInitMethod().getId()))
+            builder.append(String.format(JTJMethodCall.METHOD_CALL_START_WITH_RETURN, "Object"))
+                    .append(String.format(JTJMethodCall.METHOD_CALL_START, jtjClass.getInitMethod().getId()))
                     .append("new java.util.HashMap<Integer,String>()")
                     .append(JTJMethodCall.METHOD_CALL_END_WITH_RETURN)
                     .append(!this.getChildren().isEmpty() ? "," : "");
@@ -68,7 +68,7 @@ public class JTJObjectCreation extends JTJChildrenNode {
             appendChildrenToBuilderWithSeparator(paramBuilder, ",");
 
             //invoke the given constructor using reflection to avoid catching checked exceptions
-            builder.append(JTJProgram.CALL_REFLECTION_CONSTRUCTOR.formatted(
+            builder.append(String.format(JTJProgram.CALL_REFLECTION_CONSTRUCTOR,
                     //return type cast
                     declaration.declaringType().getQualifiedName(),
                     //class
@@ -78,7 +78,7 @@ public class JTJObjectCreation extends JTJChildrenNode {
                             .mapToObj(i -> declaration.getParam(i).describeType() + ".class")
                             .collect(Collectors.joining(",")),
                     //parameters
-                    paramBuilder.toString()
+                    paramBuilder
             ));
         }
     }

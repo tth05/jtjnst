@@ -110,7 +110,7 @@ public class VariableStack {
 
     public enum ScopeType {
         GLOBAL("global"),
-        INSTANCE_FIELDS("((%s)args.get(0))".formatted(JTJObjectCreation.TYPE_CAST)),
+        INSTANCE_FIELDS(String.format("((%s)args.get(0))", JTJObjectCreation.TYPE_CAST)),
         THIS_INSTANCE("args"),
         PARAM("args"),
         LOCAL("local"),

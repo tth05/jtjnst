@@ -24,194 +24,186 @@ import java.nio.file.Path;
 public class SumApp {
 
     //language=JAVA
-    private static final String CUSTOM_SOCKET = """
-            package util;
-            import java.io.IOException;
-            import java.io.InputStreamReader;
-            import java.io.BufferedReader;
-                        
-            public class Socket {
-                private String remoteHostIP;
-                private int remotePort;
-                private java.net.Socket socket;
-                        
-                private BufferedReader reader;
-                        
-                public Socket(String remoteHostIP, int remotePort) {
-                    this.remoteHostIP = remoteHostIP;
-                    this.remotePort = remotePort;
-                }
-                        
-                public Socket(java.net.Socket socket) throws IOException {
-                    this.socket = socket;
-                    this.remotePort = socket.getPort();
-                    this.remoteHostIP = socket.getRemoteSocketAddress().toString();
-                    reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                }
-                        
-                public boolean connect() {
-                    try {
-                        socket = new java.net.Socket(remoteHostIP, remotePort);
-                        reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return false;
-                    }
-                    return true;
-                }
-                        
-                public int dataAvailable() throws IOException {
-                    return socket.getInputStream().available();
-                }
-                        
-                public int read() throws IOException {
-                    return socket.getInputStream().read();
-                }
-                        
-                public int read(byte[] b, int len) throws IOException {
-                    return socket.getInputStream().read(b, 0, len);
-                }
-                        
-                public String readLine() throws IOException {
-                    return reader.readLine();
-                }
-                        
-                public void write(int value) throws IOException {
-                    socket.getOutputStream().write(value);
-                }
-                        
-                public void write(byte[] b, int len) throws IOException {
-                    socket.getOutputStream().write(b, 0, len);
-                }
-                        
-                public void write(String s) throws IOException {
-                    socket.getOutputStream().write(s.getBytes());
-                }
-                        
-                public void close() throws IOException {
-                    reader.close();
-                    socket.close();
-                }
-            }
-            """;
+    private static final String CUSTOM_SOCKET = "package util;\n" +
+                                                "import java.io.IOException;\n" +
+                                                "import java.io.InputStreamReader;\n" +
+                                                "import java.io.BufferedReader;\n" +
+                                                "\n" +
+                                                "public class Socket {\n" +
+                                                "    private String remoteHostIP;\n" +
+                                                "    private int remotePort;\n" +
+                                                "    private java.net.Socket socket;\n" +
+                                                "\n" +
+                                                "    private BufferedReader reader;\n" +
+                                                "\n" +
+                                                "    public Socket(String remoteHostIP, int remotePort) {\n" +
+                                                "        this.remoteHostIP = remoteHostIP;\n" +
+                                                "        this.remotePort = remotePort;\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public Socket(java.net.Socket socket) throws IOException {\n" +
+                                                "        this.socket = socket;\n" +
+                                                "        this.remotePort = socket.getPort();\n" +
+                                                "        this.remoteHostIP = socket.getRemoteSocketAddress().toString();\n" +
+                                                "        reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public boolean connect() {\n" +
+                                                "        try {\n" +
+                                                "            socket = new java.net.Socket(remoteHostIP, remotePort);\n" +
+                                                "            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));\n" +
+                                                "        } catch (Exception e) {\n" +
+                                                "            e.printStackTrace();\n" +
+                                                "            return false;\n" +
+                                                "        }\n" +
+                                                "        return true;\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public int dataAvailable() throws IOException {\n" +
+                                                "        return socket.getInputStream().available();\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public int read() throws IOException {\n" +
+                                                "        return socket.getInputStream().read();\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public int read(byte[] b, int len) throws IOException {\n" +
+                                                "        return socket.getInputStream().read(b, 0, len);\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public String readLine() throws IOException {\n" +
+                                                "        return reader.readLine();\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public void write(int value) throws IOException {\n" +
+                                                "        socket.getOutputStream().write(value);\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public void write(byte[] b, int len) throws IOException {\n" +
+                                                "        socket.getOutputStream().write(b, 0, len);\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public void write(String s) throws IOException {\n" +
+                                                "        socket.getOutputStream().write(s.getBytes());\n" +
+                                                "    }\n" +
+                                                "\n" +
+                                                "    public void close() throws IOException {\n" +
+                                                "        reader.close();\n" +
+                                                "        socket.close();\n" +
+                                                "    }\n" +
+                                                "}\n";
 
     //language=JAVA
-    private static final String CUSTOM_SERVERSOCKET = """
-            package util;
-            import java.io.IOException;
-                        
-            public class ServerSocket {
-                        
-                private final java.net.ServerSocket serverSocket;
-                        
-                public ServerSocket(int localPort) {
-                    try {
-                        serverSocket = new java.net.ServerSocket(localPort);
-                    } catch (Throwable t) {
-                        throw new RuntimeException();
-                    }
-                }
-                        
-                public Socket accept() {
-                    try {
-                        return new Socket(serverSocket.accept());
-                    } catch (Throwable t) {
-                        return null;
-                    }
-                }
-                        
-                public void close() throws IOException {
-                    serverSocket.close();
-                }
-            }
-            """;
+    private static final String CUSTOM_SERVERSOCKET = "package util;\n" +
+                                                      "import java.io.IOException;\n" +
+                                                      "\n" +
+                                                      "public class ServerSocket {\n" +
+                                                      "\n" +
+                                                      "    private final java.net.ServerSocket serverSocket;\n" +
+                                                      "\n" +
+                                                      "    public ServerSocket(int localPort) {\n" +
+                                                      "        try {\n" +
+                                                      "            serverSocket = new java.net.ServerSocket(localPort);\n" +
+                                                      "        } catch (Throwable t) {\n" +
+                                                      "            throw new RuntimeException();\n" +
+                                                      "        }\n" +
+                                                      "    }\n" +
+                                                      "\n" +
+                                                      "    public Socket accept() {\n" +
+                                                      "        try {\n" +
+                                                      "            return new Socket(serverSocket.accept());\n" +
+                                                      "        } catch (Throwable t) {\n" +
+                                                      "            return null;\n" +
+                                                      "        }\n" +
+                                                      "    }\n" +
+                                                      "\n" +
+                                                      "    public void close() throws IOException {\n" +
+                                                      "        serverSocket.close();\n" +
+                                                      "    }\n" +
+                                                      "}\n";
 
     public static void runClient() throws IOException {
         Path tmpDir = Files.createTempDirectory("jtjtnst");
 
         // language=Java
-        String input1 = """
-                package client;
-                import util.Socket;
-                import java.io.IOException;
-                public class SumClient {
-                    private Socket clientSocket;
-                                
-                    public boolean verbinden(String host, int port) {
-                        this.clientSocket = new Socket(host, port);
-                        return this.clientSocket.connect();
-                    }
-                                
-                    public void senden(String text) {
-                        try {
-                            this.clientSocket.write(text + "\\n");
-                        } catch (IOException e) {
-                        }
-                    }
-                                
-                    public String empfangen() {
-                        try {
-                            if (this.clientSocket.dataAvailable() > 0)
-                                return this.clientSocket.readLine();
-                            return null;
-                        } catch (IOException e) {
-                            return null;
-                        }
-                    }
-                                
-                    public void abmelden() {
-                        if (this.clientSocket == null)
-                            return;
-                        try {
-                            this.clientSocket.close();
-                        } catch (IOException e) {
-                        }
-                    }
-                }
-                                
-                """;
+        String input1 = "package client;\n" +
+                        "import util.Socket;\n" +
+                        "import java.io.IOException;\n" +
+                        "public class SumClient {\n" +
+                        "    private Socket clientSocket;\n" +
+                        "\n" +
+                        "    public boolean verbinden(String host, int port) {\n" +
+                        "        this.clientSocket = new Socket(host, port);\n" +
+                        "        return this.clientSocket.connect();\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public void senden(String text) {\n" +
+                        "        try {\n" +
+                        "            this.clientSocket.write(text + \"\\n\");\n" +
+                        "        } catch (IOException e) {\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public String empfangen() {\n" +
+                        "        try {\n" +
+                        "            if (this.clientSocket.dataAvailable() > 0)\n" +
+                        "                return this.clientSocket.readLine();\n" +
+                        "            return null;\n" +
+                        "        } catch (IOException e) {\n" +
+                        "            return null;\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public void abmelden() {\n" +
+                        "        if (this.clientSocket == null)\n" +
+                        "            return;\n" +
+                        "        try {\n" +
+                        "            this.clientSocket.close();\n" +
+                        "        } catch (IOException e) {\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "}\n" +
+                        "\n";
 
         //language=Java
-        String input2 = """
-                package client;
-                import java.io.BufferedReader;
-                import java.io.IOException;
-                import java.io.InputStreamReader;
-                                
-                public class SumClientUI {
-                    public static void main(String[] args) throws IOException, InterruptedException {
-                	    System.out.println("Start");
-                        SumClient sumClient = new SumClient();
-                                
-                        System.out.println("Connect");
-                        boolean value = sumClient.verbinden("localhost", 15000);
-                        System.out.println("After connect");
-                        if(!value)
-                            return;
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-                                
-                        while (true) {
-                            if (reader.ready()) {
-                                String command = reader.readLine();
-                                System.out.println(command);
-                                sumClient.senden(command);
-                            }
-                                
-                            String empfangen = sumClient.empfangen();
-                            if (empfangen == null) {
-                                Thread.sleep(100);
-                                continue;
-                            }
-                                
-                            System.out.println(empfangen);
-                                
-                            if (empfangen.equals("Ende vom SumServer."))
-                                break;
-                            System.out.print("Geben Sie ein Kommando ein: ");
-                        }
-                    }
-                }
-                """;
+        String input2 = "package client;\n" +
+                        "import java.io.BufferedReader;\n" +
+                        "import java.io.IOException;\n" +
+                        "import java.io.InputStreamReader;\n" +
+                        "\n" +
+                        "public class SumClientUI {\n" +
+                        "    public static void main(String[] args) throws IOException, InterruptedException {\n" +
+                        "	    System.out.println(\"Start\");\n" +
+                        "        SumClient sumClient = new SumClient();\n" +
+                        "\n" +
+                        "        System.out.println(\"Connect\");\n" +
+                        "        boolean value = sumClient.verbinden(\"localhost\", 15000);\n" +
+                        "        System.out.println(\"After connect\");\n" +
+                        "        if(!value)\n" +
+                        "            return;\n" +
+                        "        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));\n" +
+                        "\n" +
+                        "        while (true) {\n" +
+                        "            if (reader.ready()) {\n" +
+                        "                String command = reader.readLine();\n" +
+                        "                System.out.println(command);\n" +
+                        "                sumClient.senden(command);\n" +
+                        "            }\n" +
+                        "\n" +
+                        "            String empfangen = sumClient.empfangen();\n" +
+                        "            if (empfangen == null) {\n" +
+                        "                Thread.sleep(100);\n" +
+                        "                continue;\n" +
+                        "            }\n" +
+                        "\n" +
+                        "            System.out.println(empfangen);\n" +
+                        "\n" +
+                        "            if (empfangen.equals(\"Ende vom SumServer.\"))\n" +
+                        "                break;\n" +
+                        "            System.out.print(\"Geben Sie ein Kommando ein: \");\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "}\n";
 
         String code = new JTJNSTranspiler(input1, input2, CUSTOM_SOCKET).getTranspiledCode();
         JavaCompilerHelper.compile("Main", code, tmpDir);
@@ -225,142 +217,136 @@ public class SumApp {
         Path tmpDir = Files.createTempDirectory("jtjtnst");
 
         // language=JAVA
-        String input1 = """
-                package server;
-                import util.ServerSocket;
-                import util.Socket;
-                import java.io.IOException;
-                                
-                public class SumServer {
-                                
-                    private ServerSocket socket;
-                    private int localPort;
-                                
-                    private long sum;
-                                
-                    public SumServer(int localPort) {
-                        this.localPort = localPort;
-                    }
-                                
-                    public void runServer() {
-                        try {
-                            this.socket = new ServerSocket(localPort);
-                        } catch (IOException e) {
-                            return;
-                        }
-                                
-                        while (true) {
-                            try {
-                                System.out.println("Waiting for client...");
-                                Socket client = this.socket.accept();
-                                client.write("OK vom SumServer.\\n");
-                                System.out.println("Accepted client and sent welcome message");
-                                new SumServerThread(this, client).run();
-                            } catch (IOException e) {
-                                System.out.println("Fehler beim verbinden!");
-                            }
-                        }
-                    }
-                                
-                    public void beendeServer() {
-                        if (this.socket == null)
-                            return;
-                        try {
-                            this.socket.close();
-                        } catch (IOException e) {
-                        }
-                    }
-                                
-                    public synchronized long getSum() {
-                        return sum;
-                    }
-                                
-                    public synchronized void setSum(long sum) {
-                        this.sum = sum;
-                    }
-                }
-                """;
+        String input1 = "package server;\n" +
+                        "import util.ServerSocket;\n" +
+                        "import util.Socket;\n" +
+                        "import java.io.IOException;\n" +
+                        "\n" +
+                        "public class SumServer {\n" +
+                        "\n" +
+                        "    private ServerSocket socket;\n" +
+                        "    private int localPort;\n" +
+                        "\n" +
+                        "    private long sum;\n" +
+                        "\n" +
+                        "    public SumServer(int localPort) {\n" +
+                        "        this.localPort = localPort;\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public void runServer() {\n" +
+                        "        try {\n" +
+                        "            this.socket = new ServerSocket(localPort);\n" +
+                        "        } catch (IOException e) {\n" +
+                        "            return;\n" +
+                        "        }\n" +
+                        "\n" +
+                        "        while (true) {\n" +
+                        "            try {\n" +
+                        "                System.out.println(\"Waiting for client...\");\n" +
+                        "                Socket client = this.socket.accept();\n" +
+                        "                client.write(\"OK vom SumServer.\\n\");\n" +
+                        "                System.out.println(\"Accepted client and sent welcome message\");\n" +
+                        "                new SumServerThread(this, client).run();\n" +
+                        "            } catch (IOException e) {\n" +
+                        "                System.out.println(\"Fehler beim verbinden!\");\n" +
+                        "            }\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public void beendeServer() {\n" +
+                        "        if (this.socket == null)\n" +
+                        "            return;\n" +
+                        "        try {\n" +
+                        "            this.socket.close();\n" +
+                        "        } catch (IOException e) {\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public synchronized long getSum() {\n" +
+                        "        return sum;\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public synchronized void setSum(long sum) {\n" +
+                        "        this.sum = sum;\n" +
+                        "    }\n" +
+                        "}\n";
 
         // language=JAVA
-        String input2 = """
-                package server;
-                
-                import util.Socket;
-                
-                import java.io.IOException;
-                
-                public class SumServerThread {
-                
-                    private Socket clientSocket;
-                    private final SumServer server;
-                
-                    public SumServerThread(SumServer server, Socket clientSocket) {
-                        this.clientSocket = clientSocket;
-                        this.server = server;
-                    }
-                
-                    public void run() {
-                        new Thread(() -> loop()).start();
-                    }
-                
-                    public void loop() {
-                        while (this.clientSocket != null) {
-                            try {
-                                execute(this.clientSocket.readLine());
-                            } catch (IOException e) {
-                                break;
-                            }
-                        }
-                    }
-                
-                    private void execute(String kommando) {
-                        String[] cmd = kommando.split(" ");
-                
-                        long number;
-                        try {
-                            number = Long.parseLong(cmd[1]);
-                        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                            sendSum();
-                            return;
-                        }
-                
-                        if ("p".equals(cmd[0])) {
-                            server.setSum(server.getSum() + number);
-                            sendSum();
-                        } else if ("r".equals(cmd[0]) && number == 0) {
-                            server.setSum(0);
-                            sendSum();
-                        } else if ("e".equals(cmd[0]) && number == 0) {
-                            try {
-                                this.clientSocket.write("Ende vom SumServer.\\n");
-                            } catch (IOException ignored) {
-                            }
-                            this.clientSocket = null;
-                        } else {
-                            sendSum();
-                        }
-                    }
-                
-                    private void sendSum() {
-                        try {
-                            this.clientSocket.write(server.getSum() + "\\n");
-                        } catch (IOException ignored) {
-                        }
-                    }
-                }
-                                
-                """;
+        String input2 = "package server;\n" +
+                        "\n" +
+                        "import util.Socket;\n" +
+                        "\n" +
+                        "import java.io.IOException;\n" +
+                        "\n" +
+                        "public class SumServerThread {\n" +
+                        "\n" +
+                        "    private Socket clientSocket;\n" +
+                        "    private final SumServer server;\n" +
+                        "\n" +
+                        "    public SumServerThread(SumServer server, Socket clientSocket) {\n" +
+                        "        this.clientSocket = clientSocket;\n" +
+                        "        this.server = server;\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public void run() {\n" +
+                        "        new Thread(() -> loop()).start();\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    public void loop() {\n" +
+                        "        while (this.clientSocket != null) {\n" +
+                        "            try {\n" +
+                        "                execute(this.clientSocket.readLine());\n" +
+                        "            } catch (IOException e) {\n" +
+                        "                break;\n" +
+                        "            }\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    private void execute(String kommando) {\n" +
+                        "        String[] cmd = kommando.split(\" \");\n" +
+                        "\n" +
+                        "        long number;\n" +
+                        "        try {\n" +
+                        "            number = Long.parseLong(cmd[1]);\n" +
+                        "        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {\n" +
+                        "            sendSum();\n" +
+                        "            return;\n" +
+                        "        }\n" +
+                        "\n" +
+                        "        if (\"p\".equals(cmd[0])) {\n" +
+                        "            server.setSum(server.getSum() + number);\n" +
+                        "            sendSum();\n" +
+                        "        } else if (\"r\".equals(cmd[0]) && number == 0) {\n" +
+                        "            server.setSum(0);\n" +
+                        "            sendSum();\n" +
+                        "        } else if (\"e\".equals(cmd[0]) && number == 0) {\n" +
+                        "            try {\n" +
+                        "                this.clientSocket.write(\"Ende vom SumServer.\\n\");\n" +
+                        "            } catch (IOException ignored) {\n" +
+                        "            }\n" +
+                        "            this.clientSocket = null;\n" +
+                        "        } else {\n" +
+                        "            sendSum();\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    private void sendSum() {\n" +
+                        "        try {\n" +
+                        "            this.clientSocket.write(server.getSum() + \"\\n\");\n" +
+                        "        } catch (IOException ignored) {\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "}\n" +
+                        "\n";
 
         // language=JAVA
-        String input3 = """
-                package server;
-                public class SumServerUI {
-                    public static void main(String[] args) {
-                    	System.out.println("Start server");
-                        new SumServer(15000).runServer();
-                    }
-                }
-                """;
+        String input3 = "package server;\n" +
+                        "public class SumServerUI {\n" +
+                        "    public static void main(String[] args) {\n" +
+                        "    	System.out.println(\"Start server\");\n" +
+                        "        new SumServer(15000).runServer();\n" +
+                        "    }\n" +
+                        "}\n";
 
         String code = new JTJNSTranspiler(input1, input2, input3, CUSTOM_SOCKET, CUSTOM_SERVERSOCKET).getTranspiledCode();
         JavaCompilerHelper.compile("Main", code, tmpDir);

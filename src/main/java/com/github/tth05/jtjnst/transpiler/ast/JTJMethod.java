@@ -12,17 +12,13 @@ import java.util.List;
 
 public class JTJMethod extends JTJChildrenNode {
 
-    public static final String METHOD_START = """
-            global.put(%d, (java.util.function.BiFunction<java.util.List<Object>, Object[], Object[]>)(\
-            (args, retPtr)->\
-            (Object[]) java.util.stream.Stream.of((Object)retPtr).peek((jtjLambda%d) -> ((java.util.function.Consumer<java.util.HashMap<Integer, Object>>) (local ->\
-            """;
+    public static final String METHOD_START =
+            "global.put(%d, (java.util.function.BiFunction<java.util.List<Object>, Object[], Object[]>)((args, retPtr)->" +
+            "(Object[]) java.util.stream.Stream.of((Object)retPtr).peek((jtjLambda%d) -> " +
+            "((java.util.function.Consumer<java.util.HashMap<Integer, Object>>) " +
+            "(local ->";
 
-    public static final String METHOD_END = """
-            )).accept(new java.util.HashMap<>())).findFirst().get()\
-            )\
-            )\
-            """;
+    public static final String METHOD_END = ")).accept(new java.util.HashMap<>())).findFirst().get()))";
 
     private final JTJBlock body = new JTJBlock(this);
 
@@ -63,7 +59,7 @@ public class JTJMethod extends JTJChildrenNode {
 
     @Override
     public void appendToStr(StringBuilder builder) {
-        builder.append(METHOD_START.formatted(this.id, JTJNSTranspiler.uniqueID()));
+        builder.append(String.format(METHOD_START, this.id, JTJNSTranspiler.uniqueID()));
 
         if (!this.returnIds.isEmpty()) {
             JTJTryCatchStatement tryCatchStatement = new JTJConditionalTryCatchStatement(this, returnIds);
