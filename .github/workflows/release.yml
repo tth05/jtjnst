@@ -1,0 +1,85 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create-release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Initial release
+          draft: false
+          prerelease: false
+  perform-release:
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        include:
+          - os: ubuntu-latest
+            postfix: ''
+            gu-binary: gu
+          - os: windows-latest
+            postfix: '.exe'
+            gu-binary: gu.cmd
+    steps:
+      - name: Setup Graalvm
+        id: setup-graalvm
+        uses: DeLaGuardo/setup-graalvm@master
+        with:
+          graalvm: '21.0.0.2'
+          java: 'java11'
+          arch: 'amd64'
+      - name: Install native-image component
+        run: |
+          ${{ matrix.gu-binary }} install native-image
+      - uses: actions/checkout@v2
+      - name: Extract tag name
+        id: tag
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            return context.payload.ref.replace("refs/tags/", "");
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build
+        run: ./gradlew shadowJar
+      - uses: ilammy/msvc-dev-cmd@v1.7.0
+        if: ${{ matrix.postfix == '.exe' }}
+      - name: Compile native image
+        run: 'native-image -jar ./build/libs/jtjnst-${{ steps.tag.outputs.result }}.jar'
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: './jtjnst-${{ steps.tag.outputs.result }}${{ matrix.postfix }}'
+          asset_name: 'jtjnst${{ matrix.postfix }}'
+          asset_content_type: binary/octet-stream
+      - name: Upload Release Asset 2
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: './build/libs/jtjnst-${{ steps.tag.outputs.result }}.jar'
+          asset_name: 'jtjnst.jar'
+          asset_content_type: binary/octet-stream
